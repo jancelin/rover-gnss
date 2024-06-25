@@ -1,40 +1,17 @@
----
-layout: default
-parent: Tests unitaires
-grand_parent: Satellite Cyclopée
-title: Test de réception du temps GNSS
-nav_order: 6
-has_children: False
----
+# F9p-ntrip-esp32
+Code pour utiliser un esp32 pour injecter directement le rtcm3 dans le f9p et un rs232 ou bluetooth en sortie  
+utile pour fournir une trame nmea corrigée sur une console qui ne gere pas le rtk  
+  
+Librairies
+https://github.com/GLAY-AK2/NTRIP-client-for-Arduino  
+esp32 maj : prend en charge les nouvelles cartes bien plus performante comme esp32-s3 (pas de bluetooth standard), esp32-c3(premier choix) ...  
+https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json  
 
-Test de réception du temps GNSS
-===============================
+Pour une utilisation bluetooth, il faut un esp32 standard. le code pour c3 sera prochainement disponible
 
-## En bref
-Ce programme permet de tester la réception du temps GNSS communiqué par un récepteur GNSS via les trames NMEA `$GPGGA` et `$GPRMC`.
+![Sans titre](https://user-images.githubusercontent.com/32975584/175784306-eab59d33-8d2f-483f-8178-c91edfd0ec41.jpg)  
+or  
 
-## Matériel
-- lilyGO 3.5;
-- Drotek DP0601 RTK GNSS (XL F9P)
+![photo_2022-06-11_14-27-14](https://user-images.githubusercontent.com/32975584/173219745-3c69165b-3083-4c63-ab6b-fc04abe8334d.jpg)
 
-## Bibliothèque
-- `TinyGPSPlus`.
-
-## Inspiration
-Ce programme est inspiré des exemples présents sur le site [Arduiniana](http://arduiniana.org/libraries/tinygpsplus/).
-
-## Ports
-Pour ce montage, le port de communication `Serial` est utilisé pour le debug via USB (moniteur série de l'IDE Arduino) à 115200 baud. <br>
-Le récepteur Drotek DP0601 a été configuré pour diffuser les trames NMEA `$GPGGA` et `$GPRMC` sur son port `UART1`.<br>
-Le lilyGO utilisera son port `Serialrx` pour recevoir les trames NMEA du récepteur GNSS.
-
-## Branchements
-
-Le montage conciste simplement à connecter le port série `Serial5` du Teensy au port série `UART1` du recepteur Drotek.
-
-|LiLyGo|DP0601|
-|------|------|
-|RX|UART1 B3 (TX)|
-|Vin (5V)|UART1 B1 (5V)|
-|GND|UART1 B6 (Gnd)|
-
+![Capture d’écran 2022-08-29 192657](https://user-images.githubusercontent.com/32975584/187261824-5b02ef2c-bc4a-482e-aa8f-ffc1788b9145.png)
