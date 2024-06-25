@@ -4,13 +4,21 @@
  ***************/
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <TinyGPSPlus.h>
 
 // Data wire is plugged into port 14 on the ESP32 (GPIO14)
-#define ONE_WIRE_BUS 14
+#define ONE_WIRE_BUS 0
+
+#define PIN_TX 26
+#define PIN_RX 27 
+#define POWER_PIN 25
+// GNSS serial port
+HardwareSerial Serialrx(1);
+// TinyGPSPlus instance to store GNSS NMEA data (datetim, position, etc.)
+TinyGPSPlus gps;
 
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWire(ONE_WIRE_BUS);
-
 // Pass our oneWire reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
 
@@ -25,6 +33,12 @@ void setup(void)
 {
   // start serial port
   Serial.begin(115200);
+  delay(100);
+  Serialrx.begin(115200, SERIAL_8N1, PIN_RX, PIN_TX);
+  delay(100);
+
+  pinMode(POWER_PIN, OUTPUT);
+  digitalWrite(POWER_PIN, HIGH);
 
   // Start up the DS18b20 communication protocole
   sensors.begin();
@@ -51,18 +65,38 @@ void setup(void)
 
 void loop(void)
 {
-     sensors.requestTemperatures();   // request temperature conversion for all sensors
-     for (int i = 0;  i < deviceCount;  i++)
-    {
-      Serial.print("Sensor ");
-      Serial.print(i+1);
-      Serial.print(" : ");
-      temp = sensors.getTempCByIndex(i);  //  Get temperature(Celsius) for sensor#i
-      Serial.print(temp);
-      Serial.print(" °C");
-      Serial.println("");
-    }
+
+  // While GNSS_SERIAL buffer is not empty
+  while (Serialrx.available())
+    // Read buffer
+    gps.encode(Serialrx.read());
+
+  // Dump GNSS time (UTC)
+  Serial.print(gps.time.hour());
+  Serial.print(':');
+  Serial.print(gps.time.minute());
+  Serial.print(':');
+  Serial.print(gps.time.second());
+  Serial.print('.');
+  Serial.print(gps.time.centisecond());
+  Serial.print(" - LONG = ");
+  Serial.print(gps.location.lng());
+  Serial.print(" - LAT = ");
+  Serial.print(gps.location.lat());
+  Serial.println();  
+
+  sensors.requestTemperatures();   // request temperature conversion for all sensors
+  for (int i = 0;  i < deviceCount;  i++) {
+    Serial.print("Sensor ");
+    Serial.print(i+1);
+    Serial.print(" : ");
+    temp = sensors.getTempCByIndex(i);  //  Get temperature(Celsius) for sensor#i
+    Serial.print(temp);
+    Serial.print(" °C");
+    Serial.println("");
+  }
   Serial.println("");
+  delay(1000);
   
 }
 

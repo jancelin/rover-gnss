@@ -72,9 +72,9 @@ void loop() {
   Serial.print(gps.time.second());
   Serial.print('.');
   Serial.print(gps.time.centisecond());
-  Serial.print('-');
+  Serial.print(" - LONG = ");
   Serial.print(gps.location.lng());
-  Serial.print('-');
+  Serial.print(" - LAT = ");
   Serial.print(gps.location.lat());
   Serial.println();  
 }
