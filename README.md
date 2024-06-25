@@ -5,6 +5,6 @@ nav_exclude: true
 ---
 
 
-# MultiProbeCase
+# CentipedeRTK rover-gnss
 
-Documentation de MultiProbeCase
+Documentation of rover-gnss
