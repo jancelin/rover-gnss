@@ -7,15 +7,15 @@
  *          and dumps updated GNSS time on USB (Serial) port.
  *          
  * @board:
- *    Teensy 3.5
+ *    LiLyGo
  * 
  * @GNSS module:
  *    Drotek DP0601 RTK GNSS (XL F9P)  
  *
  * @wiring:
- *      Teensy RX2      ->  DP0601 UART1 B3 (TX) 
- *      Teensy Vin (5V) ->  DP0601 UART1 B1 (5V)
- *      Teensy GND      ->  DP0601 UART1 B6 (GND)
+ *      LiLyGo RX2      ->  DP0601 UART1 B3 (TX) 
+ *      LiLyGo Vin (5V) ->  DP0601 UART1 B1 (5V)
+ *      LiLyGo GND      ->  DP0601 UART1 B6 (GND)
  *      
  * @ports:
  *      Serial (115200 baud)
