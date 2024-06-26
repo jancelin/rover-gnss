@@ -210,18 +210,21 @@ void readGNSSData() {
 }
 
 void displayGNSSData() {
-    Serial.print(gps.time.hour());
-    Serial.print(':');
-    Serial.print(gps.time.minute());
-    Serial.print(':');
-    Serial.print(gps.time.second());
-    Serial.print('.');
-    Serial.print(gps.time.centisecond());
-    Serial.print(" - LONG = ");
-    Serial.print(gps.location.lng());
-    Serial.print(" - LAT = ");
-    Serial.print(gps.location.lat());
-    Serial.println();
+    if (gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
+        char timeBuffer[30];
+        snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d",
+                 gps.date.year(), gps.date.month(), gps.date.day(),
+                 gps.time.hour(), gps.time.minute(), gps.time.second());
+        
+        Serial.printf("Time: %s - LONG = %.8f - LAT = %.8f - ALT = %.3f - Quality = %d - Satellites = %d\n",
+                      timeBuffer,
+                      gps.location.lng(), gps.location.lat(),
+                      gps.altitude.meters(),
+                      gps.hdop.value(),
+                      gps.satellites.value());
+    } else {
+        Serial.println("GNSS data not available");
+    }
 }
 
 void readTemperatureSensors() {
@@ -239,13 +242,26 @@ void readTemperatureSensors() {
 }
 
 void publishMQTTData() {
-    if (client.connected()) {
-        String json = "{\"user\":\"" + (String)mqtt_user + "\",\"Temperature_Water\":\"" + (String)sensors.getTempCByIndex(0) + "\",\"Lon\":\"" + (String)gps.location.lng() + "\",\"Lat\":\"" + (String)gps.location.lat() + "\"}";
+    if (client.connected() && gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
+        char timeBuffer[30];
+        snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d",
+                 gps.date.year(), gps.date.month(), gps.date.day(),
+                 gps.time.hour(), gps.time.minute(), gps.time.second());
+        
+        String json = "{\"user\":\"" + (String)mqtt_user +
+                      "\",\"Temperature_Water\":\"" + (String)sensors.getTempCByIndex(0) +
+                      "\",\"Lon\":\"" + String(gps.location.lng(), 8) +
+                      "\",\"Lat\":\"" + String(gps.location.lat(), 8) +
+                      "\",\"Alt\":\"" + String(gps.altitude.meters(), 3) +
+                      "\",\"Quality\":\"" + String(gps.hdop.value()) +
+                      "\",\"Satellites\":\"" + String(gps.satellites.value()) +
+                      "\",\"Time\":\"" + String(timeBuffer) + "\"}";
+        
         client.publish(mqtt_output, json.c_str());
         Serial.println("Mqtt sent to : " + (String)mqtt_output);
         Serial.println(json);
     } else {
-        Serial.println("MQTT not connected. Data not sent.");
+        Serial.println("MQTT not connected or GNSS data not available. Data not sent.");
     }
 }
 
