@@ -6,6 +6,40 @@
 #include <TinyGPSPlus.h>
 #include <PubSubClient.h>
 
+#define LOG_LEVEL_NONE  0
+#define LOG_LEVEL_ERROR 1
+#define LOG_LEVEL_WARN  2
+#define LOG_LEVEL_INFO  3
+#define LOG_LEVEL_DEBUG 4
+
+// Définir le niveau de log actuel
+#define LOG_LEVEL LOG_LEVEL_DEBUG
+
+void logMessage(int level, const char* message);
+void logMessage(int level, const char* message, int value);
+void logMessage(int level, const char* message, const char* value);
+void logMessage(int level, const char* message, float value, int decimals = 2);
+void logMessage(int level, const char* message, int32_t value);
+void logMessage(int level, const char* message, uint32_t value);
+
+void locateDevices();
+void printDeviceAddresses();
+void connectToWiFi();
+void requestSourceTable();
+void requestMountPointRawData();
+void handleMQTTConnection();
+void readGNSSData();
+void displayGNSSData();
+void readTemperatureSensors();
+void publishMQTTData();
+void handleNTRIPData();
+void handleSerialData();
+void printAddress(DeviceAddress deviceAddress);
+void setup_wifi();
+void reconnectMQTT();
+void reconnectNTRIP();
+void callback(char* topic, byte* message, unsigned int length);
+
 HardwareSerial MySerial(1);
 #define PIN_TX 26
 #define PIN_RX 27 
@@ -127,37 +161,70 @@ void loop() {
     delay(500);
 }
 
+void logMessage(int level, const char* message) {
+    if (level <= LOG_LEVEL) {
+        Serial.println(message);
+    }
+}
+
+void logMessage(int level, const char* message, int value) {
+    if (level <= LOG_LEVEL) {
+        Serial.print(message);
+        Serial.println(value);
+    }
+}
+
+void logMessage(int level, const char* message, const char* value) {
+    if (level <= LOG_LEVEL) {
+        Serial.print(message);
+        Serial.println(value);
+    }
+}
+
+void logMessage(int level, const char* message, float value, int decimals) {
+    if (level <= LOG_LEVEL) {
+        Serial.print(message);
+        Serial.println(value, decimals);
+    }
+}
+
+void logMessage(int level, const char* message, int32_t value) {
+    if (level <= LOG_LEVEL) {
+        Serial.print(message);
+        Serial.println(value);
+    }
+}
+
+void logMessage(int level, const char* message, uint32_t value) {
+    if (level <= LOG_LEVEL) {
+        Serial.print(message);
+        Serial.println(value);
+    }
+}
+
 void locateDevices() {
-    Serial.println("Locating devices...");
-    Serial.print("Found ");
-    deviceCount = sensors.getDeviceCount();
-    Serial.print(deviceCount, DEC);
-    Serial.println(" devices.");
-    Serial.println("");
+    logMessage(LOG_LEVEL_INFO, "Locating devices...");
+    logMessage(LOG_LEVEL_INFO, "Found ", sensors.getDeviceCount());
 }
 
 void printDeviceAddresses() {
-    Serial.println("Printing addresses...");
-    for (int i = 0; i < deviceCount; i++) {
-        Serial.print("Sensor ");
-        Serial.print(i + 1);
-        Serial.print(" : ");
+    logMessage(LOG_LEVEL_INFO, "Printing addresses...");
+    for (int i = 0; i < sensors.getDeviceCount(); i++) {
+        logMessage(LOG_LEVEL_INFO, "Sensor ", i + 1);
         sensors.getAddress(Thermometer, i);
         printAddress(Thermometer);
     }
 }
 
 void connectToWiFi() {
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
+    logMessage(LOG_LEVEL_INFO, "Connecting to ", ssid);
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
-        Serial.print(".");
+        logMessage(LOG_LEVEL_DEBUG, ".");
     }
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    logMessage(LOG_LEVEL_INFO, "WiFi connected");
+    logMessage(LOG_LEVEL_INFO, "IP address: ", WiFi.localIP().toString().c_str());
 
     // Reinitialize MQTT and NTRIP connections after WiFi reconnects
     if (client.connected()) {
@@ -172,7 +239,7 @@ void connectToWiFi() {
 }
 
 void requestSourceTable() {
-    Serial.println("Requesting SourceTable.");
+    logMessage(LOG_LEVEL_INFO, "Requesting SourceTable.");
     if (ntrip_c.reqSrcTbl(host, httpPort)) {
         char buffer[512];
         delay(5);
@@ -180,19 +247,19 @@ void requestSourceTable() {
             ntrip_c.readLine(buffer, sizeof(buffer));
         }
     } else {
-        Serial.println("SourceTable request error");
+        logMessage(LOG_LEVEL_ERROR, "SourceTable request error");
     }
-    Serial.print("Requesting SourceTable is OK\n");
+    logMessage(LOG_LEVEL_INFO, "Requesting SourceTable is OK");
     ntrip_c.stop();
 }
 
 void requestMountPointRawData() {
-    Serial.println("Requesting MountPoint's Raw data");
+    logMessage(LOG_LEVEL_INFO, "Requesting MountPoint's Raw data");
     if (!ntrip_c.reqRaw(host, httpPort, mntpnt, user, passwd)) {
         delay(15000);
         ESP.restart();
     }
-    Serial.println("Requesting MountPoint is OK");
+    logMessage(LOG_LEVEL_INFO, "Requesting MountPoint is OK");
     ntripConnected = true;
 }
 
@@ -216,29 +283,29 @@ void displayGNSSData() {
                  gps.date.year(), gps.date.month(), gps.date.day(),
                  gps.time.hour(), gps.time.minute(), gps.time.second());
         
-        Serial.printf("Time: %s - LONG = %.8f - LAT = %.8f - ALT = %.3f - Quality = %d - Satellites = %d\n",
-                      timeBuffer,
-                      gps.location.lng(), gps.location.lat(),
-                      gps.altitude.meters(),
-                      gps.hdop.value(),
-                      gps.satellites.value());
+        logMessage(LOG_LEVEL_INFO, "Time: ", timeBuffer);
+        logMessage(LOG_LEVEL_INFO, "LONG = ", gps.location.lng(), 8);
+        logMessage(LOG_LEVEL_INFO, "LAT = ", gps.location.lat(), 8);
+        logMessage(LOG_LEVEL_INFO, "ALT = ", gps.altitude.meters(), 3);
+        logMessage(LOG_LEVEL_INFO, "Quality = ", gps.hdop.value());
+        logMessage(LOG_LEVEL_INFO, "Satellites = ", gps.satellites.value());
     } else {
-        Serial.println("GNSS data not available");
+        logMessage(LOG_LEVEL_WARN, "GNSS data not available");
     }
 }
 
 void readTemperatureSensors() {
     sensors.requestTemperatures();
-    for (int i = 0; i < deviceCount; i++) {
-        Serial.print("Sensor ");
-        Serial.print(i + 1);
-        Serial.print(" : ");
+    for (int i = 0; i < sensors.getDeviceCount(); i++) {
+        logMessage(LOG_LEVEL_INFO, "Sensor ", i + 1);
         temp = sensors.getTempCByIndex(i);
-        Serial.print(temp);
-        Serial.print(" °C");
-        Serial.println("");
+        if (temp == DEVICE_DISCONNECTED_C) {
+            temp = 0; // Set temperature to 0 if no sensor is connected
+        }
+        logMessage(LOG_LEVEL_INFO, " : ", temp, 2);
+        logMessage(LOG_LEVEL_INFO, " °C");
     }
-    Serial.println("");
+    logMessage(LOG_LEVEL_INFO, "");
 }
 
 void publishMQTTData() {
@@ -248,8 +315,13 @@ void publishMQTTData() {
                  gps.date.year(), gps.date.month(), gps.date.day(),
                  gps.time.hour(), gps.time.minute(), gps.time.second());
         
+        float waterTemp = sensors.getTempCByIndex(0);
+        if (waterTemp == DEVICE_DISCONNECTED_C) {
+            waterTemp = 0; // Set temperature to 0 if no sensor is connected
+        }
+
         String json = "{\"user\":\"" + (String)mqtt_user +
-                      "\",\"Temperature_Water\":\"" + (String)sensors.getTempCByIndex(0) +
+                      "\",\"Temperature_Water\":\"" + String(waterTemp) +
                       "\",\"Lon\":\"" + String(gps.location.lng(), 8) +
                       "\",\"Lat\":\"" + String(gps.location.lat(), 8) +
                       "\",\"Alt\":\"" + String(gps.altitude.meters(), 3) +
@@ -258,10 +330,10 @@ void publishMQTTData() {
                       "\",\"Time\":\"" + String(timeBuffer) + "\"}";
         
         client.publish(mqtt_output, json.c_str());
-        Serial.println("Mqtt sent to : " + (String)mqtt_output);
-        Serial.println(json);
+        logMessage(LOG_LEVEL_INFO, "Mqtt sent to : ", mqtt_output);
+        logMessage(LOG_LEVEL_INFO, json.c_str());
     } else {
-        Serial.println("MQTT not connected or GNSS data not available. Data not sent.");
+        logMessage(LOG_LEVEL_WARN, "MQTT not connected or GNSS data not available. Data not sent.");
     }
 }
 
@@ -277,10 +349,10 @@ void handleNTRIPData() {
     }
 
     if (!ntripDataAvailable) {
-        Serial.println("No NTRIP data available.");
+        logMessage(LOG_LEVEL_WARN, "No NTRIP data available.");
         ntripConnected = false;
     } else {
-        Serial.printf("NTRIP data in %d bytes\n", ntripDataSize);
+        logMessage(LOG_LEVEL_DEBUG, "NTRIP data in ", ntripDataSize);
         ntripConnected = true;
     }
 }
@@ -291,7 +363,7 @@ void handleSerialData() {
         String s = MySerial.readStringUntil('\n');
         switch (trans) {
             case 0:  // serial out
-                Serial.println(s);
+                logMessage(LOG_LEVEL_DEBUG, s.c_str());
                 break;
             case 1:  // udp out
                 udp.beginPacket(udpAddress, udpPort);
@@ -300,14 +372,14 @@ void handleSerialData() {
                 break;
             case 2:  // tcp client out
                 if (!client.connect(server, port)) {
-                    Serial.println("connection failed");
+                    logMessage(LOG_LEVEL_ERROR, "connection failed");
                     return;
                 }
                 client.println(s);
                 while (client.connected()) {
                     while (client.available()) {
                         char c = client.read();
-                        Serial.print(c);
+                        logMessage(LOG_LEVEL_DEBUG, String(c).c_str());
                     }
                 }
                 client.stop();
@@ -319,7 +391,7 @@ void handleSerialData() {
                 MySerial.println(s);
                 break;
             default:  // mauvaise config
-                Serial.println("mauvais choix ou oubli de configuration");
+                logMessage(LOG_LEVEL_ERROR, "mauvais choix ou oubli de configuration");
                 break;
         }
     }
@@ -337,59 +409,53 @@ void printAddress(DeviceAddress deviceAddress) {
 
 void setup_wifi() {
     delay(10);
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-
+    logMessage(LOG_LEVEL_INFO, "Connecting to ", ssid);
     WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
-        Serial.print(".");
+        logMessage(LOG_LEVEL_DEBUG, ".");
     }
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    logMessage(LOG_LEVEL_INFO, "WiFi connected");
+    logMessage(LOG_LEVEL_INFO, "IP address: ", WiFi.localIP().toString().c_str());
 }
 
 void reconnectMQTT() {
     while (!client.connected()) {
         delay(100);
-        Serial.print("Attempting MQTT connection...");
+        logMessage(LOG_LEVEL_INFO, "Attempting MQTT connection...");
         if (client.connect(mqtt_UUID, mqtt_user, mqtt_password)) {
-            Serial.println("connected");
+            logMessage(LOG_LEVEL_INFO, "connected");
             client.subscribe(mqtt_input);
         } else {
-            Serial.print("failed, rc=");
-            Serial.print(client.state());
-            Serial.println(" try again in 5 seconds");
+            logMessage(LOG_LEVEL_ERROR, "failed, rc=", client.state());
+            logMessage(LOG_LEVEL_INFO, " try again in 5 seconds");
             delay(3000);
         }
     }
 }
 
 void reconnectNTRIP() {
-    Serial.println("Attempting to reconnect to NTRIP caster...");
+    logMessage(LOG_LEVEL_INFO, "Attempting to reconnect to NTRIP caster...");
     if (!ntrip_c.connected()) {
         if (!ntrip_c.reqRaw(host, httpPort, mntpnt, user, passwd)) {
-            Serial.println("NTRIP reconnect failed. Will retry...");
+            logMessage(LOG_LEVEL_ERROR, "NTRIP reconnect failed. Will retry...");
             ntripConnected = false;
         } else {
-            Serial.println("NTRIP reconnected successfully.");
+            logMessage(LOG_LEVEL_INFO, "NTRIP reconnected successfully.");
             ntripConnected = true;
         }
     }
 }
 
 void callback(char* topic, byte* message, unsigned int length) {
-    Serial.print("Message arrived on topic: ");
-    Serial.print(topic);
-    Serial.print(". Message: ");
+    logMessage(LOG_LEVEL_INFO, "Message arrived on topic: ", topic);
+    logMessage(LOG_LEVEL_INFO, ". Message: ");
     String messageTemp;
 
     for (int i = 0; i < length; i++) {
-        Serial.print((char)message[i]);
+        logMessage(LOG_LEVEL_INFO, String((char)message[i]).c_str());
         messageTemp += (char)message[i];
     }
-    Serial.println();
+    logMessage(LOG_LEVEL_INFO, "");
 }
