@@ -1,40 +1,3 @@
-
-/* ------------------------------------------------------
-#include <WiFi.h>
- *
-#include "NTRIPClient.h"
- * @inspiration:
-#include <HardwareSerial.h>
- *     http://arduiniana.org/libraries/tinygpsplus/
- * 
- * @brief:  This program feeds TinyGPSPlus object with GNSS_SERIAL buffer data
- *          and dumps updated GNSS time on MQTT over Wifi connection.
- *          
- * @board:
- *    lilyGo 3.5
- * 
- * @GNSS module:
- *    Drotek DP0601 RTK GNSS (XL F9P)  
- *
- * @wiring:
- *      lilyGo RX2      ->  DP0601 UART1 B3 (TX) 
- *      lilyGo Vin (5V) ->  DP0601 UART1 B1 (5V)
- *      lilyGo GND      ->  DP0601 UART1 B6 (GND)
- *      
- * @ports:
- *      Serial (115200 baud)
- *      GNSS_SERIAL (configured baudrate for DP0601)
- *      
- * ------------------------------------------------------
- */
-/* ############################
- * #    GLOBAL DEFINITIONS    #
- * ############################
- */
-/* ###################
- * #    LIBRARIES    #
- * ###################
- */
 #include <WiFi.h>
 #include "NTRIPClient.h"
 #include <HardwareSerial.h>
@@ -43,30 +6,20 @@
 #include <TinyGPSPlus.h>
 #include <PubSubClient.h>
 
-/* #################
-HardwareSerial MySerial(1);
- * #    PROGRAM    #
- * #################
- */
 HardwareSerial MySerial(1);
 #define PIN_TX 26
 #define PIN_RX 27 
 #define POWER_PIN 25
 
-// Data wire is plugged into port 14 on the ESP32 (GPIO14)
 #define ONE_WIRE_BUS 0
 
-// Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWire(ONE_WIRE_BUS);
-// Pass our oneWire reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
 
-// variable to hold device addresses
 DeviceAddress Thermometer;
 int deviceCount = 0;
-float temp = 0;  // variable for displaying the temperature
+float temp = 0;
 
-// MQTT Parameters
 const char* ssid = "buoy";
 const char* password = "12345678";
 const char* mqtt_server = "192.168.36.197";
@@ -85,14 +38,13 @@ char msg[50];
 int value = 0;
 int timeInterval = 1000;
 
-// TinyGPSPlus instance to store GNSS NMEA data (datetim, position, etc.)
 TinyGPSPlus gps;
 
-IPAddress server(192, 168, 1, 100);  // IP address of the server
-int port = 80;            
+IPAddress server(192, 168, 1, 100);
+int port = 80;
 
 char* host = "caster.centipede.fr";
-int httpPort = 2101; //port 2101 is default port of NTRIP caster
+int httpPort = 2101;
 char* mntpnt = "LIENSS";
 char* user = "rover-gnss-tester";
 char* passwd = "";
@@ -101,9 +53,20 @@ NTRIPClient ntrip_c;
 const char* udpAddress = "192.168.1.255";
 const int udpPort = 9999;
 
-int trans = 3;  //0 = serial, 1 = udp, 2 = tcp client, 3 = MySerial, 4 = myserial Choose which out you want use. for rs232 set 0 and connect tx f9p directly to rs232 module
+int trans = 3;
 
 WiFiUDP udp;
+
+unsigned long lastWifiReconnectAttempt = 0;
+const unsigned long wifiReconnectInterval = 10000; // 10 seconds
+
+unsigned long lastMqttReconnectAttempt = 0;
+const unsigned long mqttReconnectInterval = 5000; // 5 seconds
+
+unsigned long lastNtripReconnectAttempt = 0;
+const unsigned long ntripReconnectInterval = 10000; // 10 seconds
+
+bool ntripConnected = false;
 
 void setup() {
     pinMode(POWER_PIN, OUTPUT);
@@ -129,9 +92,30 @@ void setup() {
 
 void loop() {
     long now = millis();
+
+    // Handle Wi-Fi reconnection
+    if (WiFi.status() != WL_CONNECTED && (now - lastWifiReconnectAttempt > wifiReconnectInterval)) {
+        lastWifiReconnectAttempt = now;
+        connectToWiFi();
+    }
+
+    // Handle MQTT reconnection
+    if (!client.connected() && (now - lastMqttReconnectAttempt > mqttReconnectInterval)) {
+        lastMqttReconnectAttempt = now;
+        reconnectMQTT();
+    } else {
+        client.loop();
+    }
+
+    // Handle NTRIP reconnection
+    if (!ntripConnected && (now - lastNtripReconnectAttempt > ntripReconnectInterval)) {
+        lastNtripReconnectAttempt = now;
+        reconnectNTRIP();
+    }
+
     if (now - lastMsg > timeInterval) {
         lastMsg = now;
-        handleMQTTConnection();
+
         readGNSSData();
         displayGNSSData();
         readTemperatureSensors();
@@ -174,6 +158,17 @@ void connectToWiFi() {
     Serial.println("WiFi connected");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
+
+    // Reinitialize MQTT and NTRIP connections after WiFi reconnects
+    if (client.connected()) {
+        client.disconnect();
+    }
+    reconnectMQTT();
+
+    if (ntrip_c.connected()) {
+        ntrip_c.stop();
+    }
+    reconnectNTRIP();
 }
 
 void requestSourceTable() {
@@ -198,12 +193,12 @@ void requestMountPointRawData() {
         ESP.restart();
     }
     Serial.println("Requesting MountPoint is OK");
+    ntripConnected = true;
 }
 
 void handleMQTTConnection() {
     if (!client.connected()) {
-        Serial.println("Reconnect to Mqtt");
-        reconnect();
+        reconnectMQTT();
     }
     client.loop();
 }
@@ -244,18 +239,31 @@ void readTemperatureSensors() {
 }
 
 void publishMQTTData() {
-    String json = "{\"user\":\"" + (String)mqtt_user + "\",\"Temperature_Water\":\"" + (String)sensors.getTempCByIndex(0) + "\",\"Lon\":\"" + (String)gps.location.lng() + "\",\"Lat\":\"" + (String)gps.location.lat() + "\"}";
-    client.publish(mqtt_output, json.c_str());
-    client.disconnect();
-
-    Serial.println("Mqtt sent to : " + (String)mqtt_output);
-    Serial.println(json);
+    if (client.connected()) {
+        String json = "{\"user\":\"" + (String)mqtt_user + "\",\"Temperature_Water\":\"" + (String)sensors.getTempCByIndex(0) + "\",\"Lon\":\"" + (String)gps.location.lng() + "\",\"Lat\":\"" + (String)gps.location.lat() + "\"}";
+        client.publish(mqtt_output, json.c_str());
+        Serial.println("Mqtt sent to : " + (String)mqtt_output);
+        Serial.println(json);
+    } else {
+        Serial.println("MQTT not connected. Data not sent.");
+    }
 }
 
 void handleNTRIPData() {
+    bool ntripDataAvailable = false;
     while (ntrip_c.available()) {
         char ch = ntrip_c.read();
         MySerial.print(ch);
+        Serial.print(ch);
+        ntripDataAvailable = true;
+    }
+
+    if (!ntripDataAvailable) {
+        Serial.println("No NTRIP data available.");
+        ntripConnected = false;
+    } else {
+        Serial.println("NTRIP data in");
+        ntripConnected = true;
     }
 }
 
@@ -264,15 +272,15 @@ void handleSerialData() {
     while (MySerial.available()) {
         String s = MySerial.readStringUntil('\n');
         switch (trans) {
-            case 0:  //serial out
+            case 0:  // serial out
                 Serial.println(s);
                 break;
-            case 1:  //udp out
+            case 1:  // udp out
                 udp.beginPacket(udpAddress, udpPort);
                 udp.print(s);
                 udp.endPacket();
                 break;
-            case 2:  //tcp client out
+            case 2:  // tcp client out
                 if (!client.connect(server, port)) {
                     Serial.println("connection failed");
                     return;
@@ -286,13 +294,13 @@ void handleSerialData() {
                 }
                 client.stop();
                 break;
-            case 3:  //MySerial out
+            case 3:  // MySerial out
                 MySerial.println(s);
                 break;
-            case 4:  //MySerial out
+            case 4:  // MySerial out
                 MySerial.println(s);
                 break;
-            default:  //mauvaise config
+            default:  // mauvaise config
                 Serial.println("mauvais choix ou oubli de configuration");
                 break;
         }
@@ -326,7 +334,7 @@ void setup_wifi() {
     Serial.println(WiFi.localIP());
 }
 
-void reconnect() {
+void reconnectMQTT() {
     while (!client.connected()) {
         delay(100);
         Serial.print("Attempting MQTT connection...");
@@ -338,6 +346,19 @@ void reconnect() {
             Serial.print(client.state());
             Serial.println(" try again in 5 seconds");
             delay(3000);
+        }
+    }
+}
+
+void reconnectNTRIP() {
+    Serial.println("Attempting to reconnect to NTRIP caster...");
+    if (!ntrip_c.connected()) {
+        if (!ntrip_c.reqRaw(host, httpPort, mntpnt, user, passwd)) {
+            Serial.println("NTRIP reconnect failed. Will retry...");
+            ntripConnected = false;
+        } else {
+            Serial.println("NTRIP reconnected successfully.");
+            ntripConnected = true;
         }
     }
 }
