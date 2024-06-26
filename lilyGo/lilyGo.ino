@@ -251,18 +251,20 @@ void publishMQTTData() {
 
 void handleNTRIPData() {
     bool ntripDataAvailable = false;
+    int ntripDataSize = 0;
+    
     while (ntrip_c.available()) {
         char ch = ntrip_c.read();
         MySerial.print(ch);
-        Serial.print(ch);
         ntripDataAvailable = true;
+        ntripDataSize++;
     }
 
     if (!ntripDataAvailable) {
         Serial.println("No NTRIP data available.");
         ntripConnected = false;
     } else {
-        Serial.println("NTRIP data in");
+        Serial.printf("NTRIP data in %d bytes\n", ntripDataSize);
         ntripConnected = true;
     }
 }
