@@ -218,3 +218,117 @@ Ce programme est conçu pour fonctionner sur une carte LilyGO T-PCIe équipée d
   - [OneWire](https://github.com/PaulStoffregen/OneWire)
   - [TinyGPSPlus](https://github.com/mikalhart/TinyGPSPlus)
   - [PubSubClient](https://github.com/knolleary/pubsubclient)
+
+
+# Schéma de Fonctionnement du Programme
+
+```markdown
++----------------------------------+
+|       LilyGO T-PCIe (ESP32)      |
++----------------------------------+
+                |
+                v
++----------------------------------+
+|        Configuration WiFi        |
+|     (SSID, Password)             |
+|                                  |
+| 1. Se connecter au réseau WiFi   |
++----------------------------------+
+                |
+                v
++----------------------------------+
+|         Configuration MQTT       |
+|     (Serveur, Port, Utilisateur) |
+|                                  |
+| 2. Se connecter au serveur MQTT  |
++----------------------------------+
+                |
+                v
++----------------------------------+
+|          Initialisation          |
+|   des Capteurs de Température    |
+|      (OneWire, DS18B20)          |
+|                                  |
+| 3. Démarrer et localiser         |
+|    les capteurs de température   |
++----------------------------------+
+                |
+                v
++----------------------------------+
+|          Initialisation          |
+|        du Module GNSS            |
+|    (TinyGPSPlus, NTRIPClient)    |
+|                                  |
+| 4. Demander les données NTRIP    |
++----------------------------------+
+                |
+                v
++----------------------------------+
+|           Boucle Principale      |
++----------------------------------+
+                |
+                v
++----------------------------------+
+| 5. Vérifier et gérer les         |
+|    reconnexions WiFi, MQTT, NTRIP|
++----------------------------------+
+                |
+                v
++----------------------------------+
+| 6. Lire les données GNSS et      |
+|    les capteurs de température   |
++----------------------------------+
+                |
+                v
++----------------------------------+
+| 7. Afficher les données sur la   |
+|    console série                 |
++----------------------------------+
+                |
+                v
++----------------------------------+
+| 8. Envoyer les données GNSS et   |
+|    température au serveur MQTT   |
++----------------------------------+
+```
+
+---
+
+## Détails du Schéma
+
+### 1. Se connecter au réseau WiFi
+
+- Le programme utilise la bibliothèque `WiFi.h` pour se connecter à un réseau WiFi en utilisant le SSID (nom du réseau) et le mot de passe fournis.
+
+### 2. Se connecter au serveur MQTT
+
+- La connexion au serveur MQTT est configurée avec l'adresse du serveur, le port, et les informations d'identification (utilisateur et mot de passe). La bibliothèque `PubSubClient.h` est utilisée pour cette tâche.
+
+### 3. Démarrer et localiser les capteurs de température
+
+- Les capteurs de température DS18B20 sont initialisés et localisés en utilisant les bibliothèques `OneWire.h` et `DallasTemperature.h`.
+
+### 4. Demander les données NTRIP
+
+- Le module GNSS est configuré pour recevoir les données NTRIP à l'aide de la bibliothèque `NTRIPClient.h`. Cette étape permet d'obtenir des données GNSS précises.
+
+### 5. Vérifier et gérer les reconnexions WiFi, MQTT, NTRIP
+
+- Le programme vérifie régulièrement les connexions WiFi, MQTT et NTRIP, et tente de se reconnecter en cas de déconnexion.
+
+### 6. Lire les données GNSS et les capteurs de température
+
+- Les données GNSS sont lues à partir du module GNSS en utilisant `TinyGPSPlus.h`.
+- Les températures des capteurs DS18B20 sont lues en utilisant `DallasTemperature.h`.
+
+### 7. Afficher les données sur la console série
+
+- Les données GNSS et de température sont affichées sur la console série pour le débogage et la vérification.
+
+### 8. Envoyer les données GNSS et température au serveur MQTT
+
+- Les données collectées sont envoyées au serveur MQTT en utilisant la bibliothèque `PubSubClient.h`.
+
+---
+
+Ce schéma de fonctionnement présente une vue d'ensemble des étapes clés du programme, des connexions et des flux de données, permettant de comprendre comment chaque composant interagit avec les autres.
