@@ -1,3 +1,40 @@
+
+/* ------------------------------------------------------
+#include <WiFi.h>
+ *
+#include "NTRIPClient.h"
+ * @inspiration:
+#include <HardwareSerial.h>
+ *     http://arduiniana.org/libraries/tinygpsplus/
+ * 
+ * @brief:  This program feeds TinyGPSPlus object with GNSS_SERIAL buffer data
+ *          and dumps updated GNSS time on MQTT over Wifi connection.
+ *          
+ * @board:
+ *    lilyGo 3.5
+ * 
+ * @GNSS module:
+ *    Drotek DP0601 RTK GNSS (XL F9P)  
+ *
+ * @wiring:
+ *      lilyGo RX2      ->  DP0601 UART1 B3 (TX) 
+ *      lilyGo Vin (5V) ->  DP0601 UART1 B1 (5V)
+ *      lilyGo GND      ->  DP0601 UART1 B6 (GND)
+ *      
+ * @ports:
+ *      Serial (115200 baud)
+ *      GNSS_SERIAL (configured baudrate for DP0601)
+ *      
+ * ------------------------------------------------------
+ */
+/* ############################
+ * #    GLOBAL DEFINITIONS    #
+ * ############################
+ */
+/* ###################
+ * #    LIBRARIES    #
+ * ###################
+ */
 #include <WiFi.h>
 #include "NTRIPClient.h"
 #include <HardwareSerial.h>
@@ -6,6 +43,11 @@
 #include <TinyGPSPlus.h>
 #include <PubSubClient.h>
 
+/* #################
+HardwareSerial MySerial(1);
+ * #    PROGRAM    #
+ * #################
+ */
 HardwareSerial MySerial(1);
 #define PIN_TX 26
 #define PIN_RX 27 
