@@ -23,8 +23,6 @@ void logMessage(int level, const char* message, float value, int decimals = 2);
 void logMessage(int level, const char* message, int32_t value);
 void logMessage(int level, const char* message, uint32_t value);
 
-
-
 BluetoothSerial SerialBT;
 HardwareSerial MySerial(1);
 #define PIN_TX 26
@@ -259,7 +257,7 @@ void handleMQTTConnection() {
 }
 
 void readGNSSData() {
-    while (MySerial.available()) {
+    while (MySerial.available() > 0) {
         gps.encode(MySerial.read());
     }
 }
@@ -347,15 +345,18 @@ void handleNTRIPData() {
 
 void handleSerialData() {
     WiFiClient client;
+    char buffer[512]; // Buffer pour stocker les données série
     while (MySerial.available()) {
-        String s = MySerial.readStringUntil('\n');
+        int len = MySerial.readBytesUntil('\n', buffer, sizeof(buffer) - 1);
+        buffer[len] = '\0'; // Ajoutez un terminateur nul pour en faire une chaîne de caractères
+
         switch (trans) {
             case 0:  // serial out
-                logMessage(LOG_LEVEL_DEBUG, s.c_str());
+                logMessage(LOG_LEVEL_DEBUG, buffer);
                 break;
             case 1:  // udp out
                 udp.beginPacket(udpAddress, udpPort);
-                udp.print(s);
+                udp.write((uint8_t*)buffer, len);
                 udp.endPacket();
                 break;
             case 2:  // tcp client out
@@ -363,7 +364,7 @@ void handleSerialData() {
                     logMessage(LOG_LEVEL_ERROR, "connection failed");
                     return;
                 }
-                client.println(s);
+                client.write((uint8_t*)buffer, len);
                 while (client.connected()) {
                     while (client.available()) {
                         char c = client.read();
@@ -373,20 +374,22 @@ void handleSerialData() {
                 client.stop();
                 break;
             case 3:  // MySerial out
-                MySerial.println(s);
+                MySerial.write((uint8_t*)buffer, len);
                 break;
             case 4:  // MySerial out
-                MySerial.println(s);
+                MySerial.write((uint8_t*)buffer, len);
                 break;
             default:  // mauvaise config
                 logMessage(LOG_LEVEL_ERROR, "mauvais choix ou oubli de configuration");
                 break;
         }
 
-        // Envoyer les trames NMEA via Bluetooth
-        SerialBT.println(s);
+        // Envoyer les trames NMEA via Bluetooth immédiatement
+        SerialBT.write((uint8_t*)buffer, len);
+        SerialBT.write('\n');
     }
 }
+
 
 void printAddress(DeviceAddress deviceAddress) {
     for (uint8_t i = 0; i < 8; i++) {
