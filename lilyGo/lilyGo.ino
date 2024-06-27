@@ -23,6 +23,25 @@ void logMessage(int level, const char* message, float value, int decimals = 2);
 void logMessage(int level, const char* message, int32_t value);
 void logMessage(int level, const char* message, uint32_t value);
 
+void locateDevices();
+void printDeviceAddresses();
+void connectToWiFi();
+void requestSourceTable();
+void requestMountPointRawData();
+void handleMQTTConnection();
+void readGNSSData();
+void displayGNSSData();
+void readTemperatureSensors();
+void publishMQTTData();
+void handleNTRIPData();
+void handleSerialData();
+void printAddress(DeviceAddress deviceAddress);
+void setup_wifi();
+void reconnectMQTT();
+void reconnectNTRIP();
+void callback(char* topic, byte* message, unsigned int length);
+void setup_bt();
+
 BluetoothSerial SerialBT;
 HardwareSerial MySerial(1);
 #define PIN_TX 26
@@ -40,8 +59,8 @@ float temp = 0;
 
 const char* ssid = "buoy";
 const char* password = "12345678";
-const char* mqtt_server = "192.168.36.197";
-const int mqtt_port = 1883;
+const char* mqtt_server = "mavi-mqtt.centipede.fr";
+const int mqtt_port = 8090;
 const char* mqtt_output = "lilygo/data";
 const char* mqtt_input = "lilygo/input";
 const char* mqtt_log = "lilygo/log";
@@ -86,6 +105,12 @@ const unsigned long ntripReconnectInterval = 10000; // 10 seconds
 
 bool ntripConnected = false;
 
+TaskHandle_t nmeaTaskHandle;
+void nmeaTask(void *parameter);
+
+SemaphoreHandle_t xSemaphore;
+
+
 void setup() {
     pinMode(POWER_PIN, OUTPUT);
     digitalWrite(POWER_PIN, HIGH);
@@ -107,7 +132,19 @@ void setup() {
     requestSourceTable();
     requestMountPointRawData();
 
+    // Initialiser le mutex
+    xSemaphore = xSemaphoreCreateMutex();
+
     setup_bt();
+    // Création de la tâche FreeRTOS pour les données NMEA
+    xTaskCreate(
+        nmeaTask,          // Fonction de la tâche
+        "NMEA Task",       // Nom de la tâche
+        4096,              // Taille de la pile (en mots, non octets)
+        NULL,              // Paramètre de la tâche
+        1,                 // Priorité de la tâche
+        &nmeaTaskHandle    // Handle de la tâche
+    );
 }
 
 void loop() {
@@ -136,16 +173,23 @@ void loop() {
     if (now - lastMsg > timeInterval) {
         lastMsg = now;
 
-        readGNSSData();
-        displayGNSSData();
-        readTemperatureSensors();
-        publishMQTTData();
+        if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
+            readGNSSData();
+            readTemperatureSensors();
+            publishMQTTData();
+            xSemaphoreGive(xSemaphore);
+        }
     }
 
-    handleNTRIPData();
-    handleSerialData();
-    delay(500);
+    // Réduire la fréquence d'appel de handleNTRIPData à toutes les 5 secondes
+    if (now % 5000 < 100) { // Toutes les 5 secondes environ
+        if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
+            handleNTRIPData();
+            xSemaphoreGive(xSemaphore);
+        }
+    }
 }
+
 
 void logMessage(int level, const char* message) {
     if (level <= LOG_LEVEL) {
@@ -205,23 +249,30 @@ void printDeviceAddresses() {
 void connectToWiFi() {
     logMessage(LOG_LEVEL_INFO, "Connecting to ", ssid);
     WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
+    unsigned long startAttemptTime = millis();
+
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < wifiReconnectInterval) {
+        vTaskDelay(100 / portTICK_PERIOD_MS); // Utiliser vTaskDelay au lieu de delay()
         logMessage(LOG_LEVEL_DEBUG, ".");
     }
-    logMessage(LOG_LEVEL_INFO, "WiFi connected");
-    logMessage(LOG_LEVEL_INFO, "IP address: ", WiFi.localIP().toString().c_str());
 
-    // Reinitialize MQTT and NTRIP connections after WiFi reconnects
-    if (client.connected()) {
-        client.disconnect();
-    }
-    reconnectMQTT();
+    if (WiFi.status() == WL_CONNECTED) {
+        logMessage(LOG_LEVEL_INFO, "WiFi connected");
+        logMessage(LOG_LEVEL_INFO, "IP address: ", WiFi.localIP().toString().c_str());
 
-    if (ntrip_c.connected()) {
-        ntrip_c.stop();
+        // Reinitialize MQTT and NTRIP connections after WiFi reconnects
+        if (client.connected()) {
+            client.disconnect();
+        }
+        reconnectMQTT();
+
+        if (ntrip_c.connected()) {
+            ntrip_c.stop();
+        }
+        reconnectNTRIP();
+    } else {
+        logMessage(LOG_LEVEL_ERROR, "WiFi connection failed");
     }
-    reconnectNTRIP();
 }
 
 void requestSourceTable() {
@@ -257,41 +308,35 @@ void handleMQTTConnection() {
 }
 
 void readGNSSData() {
-    while (MySerial.available() > 0) {
-        gps.encode(MySerial.read());
+    if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
+        while (MySerial.available() > 0) {
+            char c = MySerial.read();
+            gps.encode(c);
+        }
+        xSemaphoreGive(xSemaphore);
     }
 }
+
 
 void displayGNSSData() {
-    if (gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
-        char timeBuffer[30];
-        snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d",
-                 gps.date.year(), gps.date.month(), gps.date.day(),
-                 gps.time.hour(), gps.time.minute(), gps.time.second());
-        
-        logMessage(LOG_LEVEL_INFO, "Time: ", timeBuffer);
-        logMessage(LOG_LEVEL_INFO, "LONG = ", gps.location.lng(), 8);
-        logMessage(LOG_LEVEL_INFO, "LAT = ", gps.location.lat(), 8);
-        logMessage(LOG_LEVEL_INFO, "ALT = ", gps.altitude.meters(), 3);
-        logMessage(LOG_LEVEL_INFO, "Quality = ", gps.hdop.value());
-        logMessage(LOG_LEVEL_INFO, "Satellites = ", gps.satellites.value());
-    } else {
-        logMessage(LOG_LEVEL_WARN, "GNSS data not available");
-    }
-}
+    if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
+        if (gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
+            char timeBuffer[30];
+            snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d",
+                     gps.date.year(), gps.date.month(), gps.date.day(),
+                     gps.time.hour(), gps.time.minute(), gps.time.second());
 
-void readTemperatureSensors() {
-    sensors.requestTemperatures();
-    for (int i = 0; i < sensors.getDeviceCount(); i++) {
-        logMessage(LOG_LEVEL_INFO, "Sensor ", i + 1);
-        temp = sensors.getTempCByIndex(i);
-        if (temp == DEVICE_DISCONNECTED_C) {
-            temp = 0; // Set temperature to 0 if no sensor is connected
+            logMessage(LOG_LEVEL_INFO, "Time: ", timeBuffer);
+            logMessage(LOG_LEVEL_INFO, "LONG = ", gps.location.lng(), 8);
+            logMessage(LOG_LEVEL_INFO, "LAT = ", gps.location.lat(), 8);
+            logMessage(LOG_LEVEL_INFO, "ALT = ", gps.altitude.meters(), 3);
+            logMessage(LOG_LEVEL_INFO, "Quality = ", gps.hdop.value());
+            logMessage(LOG_LEVEL_INFO, "Satellites = ", gps.satellites.value());
+        } else {
+            logMessage(LOG_LEVEL_WARN, "GNSS data not available");
         }
-        logMessage(LOG_LEVEL_INFO, " : ", temp, 2);
-        logMessage(LOG_LEVEL_INFO, " °C");
+        xSemaphoreGive(xSemaphore);
     }
-    logMessage(LOG_LEVEL_INFO, "");
 }
 
 void publishMQTTData() {
@@ -315,12 +360,29 @@ void publishMQTTData() {
                       "\",\"Satellites\":\"" + String(gps.satellites.value()) +
                       "\",\"Time\":\"" + String(timeBuffer) + "\"}";
         
-        client.publish(mqtt_output, json.c_str());
-        logMessage(LOG_LEVEL_INFO, "Mqtt sent to : ", mqtt_output);
-        logMessage(LOG_LEVEL_INFO, json.c_str());
+        if (client.publish(mqtt_output, json.c_str())) {
+            logMessage(LOG_LEVEL_INFO, "Mqtt sent to : ", mqtt_output);
+            logMessage(LOG_LEVEL_INFO, json.c_str());
+        } else {
+            logMessage(LOG_LEVEL_WARN, "Failed to send MQTT message");
+        }
     } else {
-        logMessage(LOG_LEVEL_WARN, "MQTT not connected or GNSS data not available. Data not sent.");
+        logMessage(LOG_LEVEL_WARN, "GNSS data not valid. Data not sent.");
     }
+}
+
+void readTemperatureSensors() {
+    sensors.requestTemperatures();
+    for (int i = 0; i < sensors.getDeviceCount(); i++) {
+        logMessage(LOG_LEVEL_INFO, "Sensor ", i + 1);
+        temp = sensors.getTempCByIndex(i);
+        if (temp == DEVICE_DISCONNECTED_C) {
+            temp = 0; // Set temperature to 0 if no sensor is connected
+        }
+        logMessage(LOG_LEVEL_INFO, " : ", temp, 2);
+        logMessage(LOG_LEVEL_INFO, " °C");
+    }
+    logMessage(LOG_LEVEL_INFO, "");
 }
 
 void handleNTRIPData() {
@@ -335,7 +397,7 @@ void handleNTRIPData() {
     }
 
     if (!ntripDataAvailable) {
-        logMessage(LOG_LEVEL_WARN, "No NTRIP data available.");
+        //logMessage(LOG_LEVEL_WARN, "No NTRIP data available.");
         ntripConnected = false;
     } else {
         logMessage(LOG_LEVEL_DEBUG, "NTRIP data in ", ntripDataSize);
@@ -349,6 +411,12 @@ void handleSerialData() {
     while (MySerial.available()) {
         int len = MySerial.readBytesUntil('\n', buffer, sizeof(buffer) - 1);
         buffer[len] = '\0'; // Ajoutez un terminateur nul pour en faire une chaîne de caractères
+        //logMessage(LOG_LEVEL_DEBUG, "NMEA Buffer: ", buffer); // Ajoutez cette ligne
+
+        // Encoder les données dans TinyGPSPlus
+        for (int i = 0; i < len; i++) {
+            gps.encode(buffer[i]);
+        }
 
         switch (trans) {
             case 0:  // serial out
@@ -415,7 +483,7 @@ void setup_wifi() {
 }
 
 void setup_bt() {
-      // Initialiser le Bluetooth
+    // Initialiser le Bluetooth
     if (!SerialBT.begin("rover-gnss")) {
         logMessage(LOG_LEVEL_INFO, "An error occurred initializing Bluetooth");
     } else {
@@ -424,30 +492,42 @@ void setup_bt() {
 }
 
 void reconnectMQTT() {
-    while (!client.connected()) {
-        delay(100);
+    unsigned long startAttemptTime = millis();
+    while (!client.connected() && millis() - startAttemptTime < mqttReconnectInterval) {
         logMessage(LOG_LEVEL_INFO, "Attempting MQTT connection...");
         if (client.connect(mqtt_UUID, mqtt_user, mqtt_password)) {
             logMessage(LOG_LEVEL_INFO, "connected");
             client.subscribe(mqtt_input);
+            break;
         } else {
             logMessage(LOG_LEVEL_ERROR, "failed, rc=", client.state());
             logMessage(LOG_LEVEL_INFO, " try again in 5 seconds");
-            delay(3000);
+            vTaskDelay(500 / portTICK_PERIOD_MS); // Utiliser vTaskDelay au lieu de delay()
         }
+    }
+
+    if (!client.connected()) {
+        logMessage(LOG_LEVEL_ERROR, "MQTT connection failed");
     }
 }
 
 void reconnectNTRIP() {
     logMessage(LOG_LEVEL_INFO, "Attempting to reconnect to NTRIP caster...");
-    if (!ntrip_c.connected()) {
+    unsigned long startAttemptTime = millis();
+    while (!ntrip_c.connected() && millis() - startAttemptTime < ntripReconnectInterval) {
         if (!ntrip_c.reqRaw(host, httpPort, mntpnt, user, passwd)) {
             logMessage(LOG_LEVEL_ERROR, "NTRIP reconnect failed. Will retry...");
             ntripConnected = false;
+            vTaskDelay(500 / portTICK_PERIOD_MS); // Utiliser vTaskDelay au lieu de delay()
         } else {
             logMessage(LOG_LEVEL_INFO, "NTRIP reconnected successfully.");
             ntripConnected = true;
+            break;
         }
+    }
+
+    if (!ntrip_c.connected()) {
+        logMessage(LOG_LEVEL_ERROR, "NTRIP connection failed");
     }
 }
 
@@ -461,4 +541,14 @@ void callback(char* topic, byte* message, unsigned int length) {
         messageTemp += (char)message[i];
     }
     logMessage(LOG_LEVEL_INFO, "");
+}
+
+void nmeaTask(void *parameter) {
+    while (true) {
+        if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
+            handleSerialData();
+            xSemaphoreGive(xSemaphore);
+        }
+        vTaskDelay(5); // 1= Délai très court pour céder la main à d'autres tâches 5= un petit délai pour améliorer la réactivité
+    }
 }
