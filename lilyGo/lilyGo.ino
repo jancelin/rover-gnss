@@ -5,6 +5,7 @@
 #include <DallasTemperature.h>
 #include <TinyGPSPlus.h>
 #include <PubSubClient.h>
+#include <BluetoothSerial.h>
 
 #define LOG_LEVEL_NONE  0
 #define LOG_LEVEL_ERROR 1
@@ -22,24 +23,9 @@ void logMessage(int level, const char* message, float value, int decimals = 2);
 void logMessage(int level, const char* message, int32_t value);
 void logMessage(int level, const char* message, uint32_t value);
 
-void locateDevices();
-void printDeviceAddresses();
-void connectToWiFi();
-void requestSourceTable();
-void requestMountPointRawData();
-void handleMQTTConnection();
-void readGNSSData();
-void displayGNSSData();
-void readTemperatureSensors();
-void publishMQTTData();
-void handleNTRIPData();
-void handleSerialData();
-void printAddress(DeviceAddress deviceAddress);
-void setup_wifi();
-void reconnectMQTT();
-void reconnectNTRIP();
-void callback(char* topic, byte* message, unsigned int length);
 
+
+BluetoothSerial SerialBT;
 HardwareSerial MySerial(1);
 #define PIN_TX 26
 #define PIN_RX 27 
@@ -122,6 +108,8 @@ void setup() {
     connectToWiFi();
     requestSourceTable();
     requestMountPointRawData();
+
+    setup_bt();
 }
 
 void loop() {
@@ -394,6 +382,9 @@ void handleSerialData() {
                 logMessage(LOG_LEVEL_ERROR, "mauvais choix ou oubli de configuration");
                 break;
         }
+
+        // Envoyer les trames NMEA via Bluetooth
+        SerialBT.println(s);
     }
 }
 
@@ -418,6 +409,15 @@ void setup_wifi() {
     }
     logMessage(LOG_LEVEL_INFO, "WiFi connected");
     logMessage(LOG_LEVEL_INFO, "IP address: ", WiFi.localIP().toString().c_str());
+}
+
+void setup_bt() {
+      // Initialiser le Bluetooth
+    if (!SerialBT.begin("rover-gnss")) {
+        logMessage(LOG_LEVEL_INFO, "An error occurred initializing Bluetooth");
+    } else {
+        logMessage(LOG_LEVEL_INFO, "Bluetooth initialized with name 'rover-gnss'");
+    }
 }
 
 void reconnectMQTT() {
