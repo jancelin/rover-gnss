@@ -57,7 +57,7 @@ DeviceAddress Thermometer;
 int deviceCount = 0;
 float temp = 0;
 
-const char* ssid = "buoy";
+const char* ssid = "ici";
 const char* password = "12345678";
 const char* mqtt_server = "mavi-mqtt.centipede.fr";
 const int mqtt_port = 8090;
@@ -82,7 +82,7 @@ int port = 80;
 
 char* host = "caster.centipede.fr";
 int httpPort = 2101;
-char* mntpnt = "LIENSS";
+char* mntpnt = "CT";
 char* user = "rover-gnss-tester";
 char* passwd = "";
 NTRIPClient ntrip_c;
@@ -137,15 +137,28 @@ void setup() {
 
     setup_bt();
     // Création de la tâche FreeRTOS pour les données NMEA
-    xTaskCreate(
+    xTaskCreatePinnedToCore(
         nmeaTask,          // Fonction de la tâche
         "NMEA Task",       // Nom de la tâche
         4096,              // Taille de la pile (en mots, non octets)
         NULL,              // Paramètre de la tâche
+        2,                 // Priorité de la tâche
+        &nmeaTaskHandle,   // Handle de la tâche
+        1                  // Épingler à l'autre cœur (esp32 a 2 cœurs, 0 et 1)
+    );
+
+    // Création de la tâche FreeRTOS pour la publication des données JSON
+    xTaskCreatePinnedToCore(
+        publishTask,       // Fonction de la tâche
+        "Publish Task",    // Nom de la tâche
+        4096,              // Taille de la pile (en mots, non octets)
+        NULL,              // Paramètre de la tâche
         1,                 // Priorité de la tâche
-        &nmeaTaskHandle    // Handle de la tâche
+        NULL,              // Pas besoin de handle
+        0                  // Épingler à l'autre cœur (esp32 a 2 cœurs, 0 et 1)
     );
 }
+
 
 void loop() {
     long now = millis();
@@ -170,26 +183,13 @@ void loop() {
         reconnectNTRIP();
     }
 
-    if (now - lastMsg > timeInterval) {
-        lastMsg = now;
-
-        if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
-            readGNSSData();
-            readTemperatureSensors();
-            publishMQTTData();
-            xSemaphoreGive(xSemaphore);
-        }
+    if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
+        readGNSSData();
+        xSemaphoreGive(xSemaphore);
     }
 
-    // Réduire la fréquence d'appel de handleNTRIPData à toutes les 5 secondes
-    if (now % 5000 < 100) { // Toutes les 5 secondes environ
-        if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
-            handleNTRIPData();
-            xSemaphoreGive(xSemaphore);
-        }
-    }
+    handleNTRIPData();
 }
-
 
 void logMessage(int level, const char* message) {
     if (level <= LOG_LEVEL) {
@@ -386,23 +386,28 @@ void readTemperatureSensors() {
 }
 
 void handleNTRIPData() {
-    bool ntripDataAvailable = false;
-    int ntripDataSize = 0;
-    
-    while (ntrip_c.available()) {
-        char ch = ntrip_c.read();
-        MySerial.print(ch);
-        ntripDataAvailable = true;
-        ntripDataSize++;
-    }
+    if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
+        bool ntripDataAvailable = false;
+        int ntripDataSize = 0;
 
-    if (!ntripDataAvailable) {
-        //logMessage(LOG_LEVEL_WARN, "No NTRIP data available.");
-        ntripConnected = false;
-    } else {
-        logMessage(LOG_LEVEL_DEBUG, "NTRIP data in ", ntripDataSize);
-        ntripConnected = true;
-    }
+        while (ntrip_c.available()) {
+            char ch = ntrip_c.read();
+            MySerial.print(ch);
+            ntripDataAvailable = true;
+            ntripDataSize++;
+        }
+
+        if (!ntripDataAvailable) {
+            // logMessage(LOG_LEVEL_WARN, "No NTRIP data available.");
+            ntripConnected = false;
+        } else {
+            logMessage(LOG_LEVEL_DEBUG, "NTRIP data in ", ntripDataSize);
+            ntripConnected = true;
+        }
+        xSemaphoreGive(xSemaphore);
+    }// else {
+        //logMessage(LOG_LEVEL_WARN, "Failed to take semaphore in handleNTRIPData.");
+    //}
 }
 
 void handleSerialData() {
@@ -411,7 +416,8 @@ void handleSerialData() {
     while (MySerial.available()) {
         int len = MySerial.readBytesUntil('\n', buffer, sizeof(buffer) - 1);
         buffer[len] = '\0'; // Ajoutez un terminateur nul pour en faire une chaîne de caractères
-        //logMessage(LOG_LEVEL_DEBUG, "NMEA Buffer: ", buffer); // Ajoutez cette ligne
+
+        // logMessage(LOG_LEVEL_DEBUG, "NMEA Buffer: ", buffer);
 
         // Encoder les données dans TinyGPSPlus
         for (int i = 0; i < len; i++) {
@@ -545,10 +551,27 @@ void callback(char* topic, byte* message, unsigned int length) {
 
 void nmeaTask(void *parameter) {
     while (true) {
-        if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
+        if (xSemaphoreTake(xSemaphore, (TickType_t)50) == pdTRUE) {
             handleSerialData();
             xSemaphoreGive(xSemaphore);
         }
         vTaskDelay(5); // 1= Délai très court pour céder la main à d'autres tâches 5= un petit délai pour améliorer la réactivité
+    }
+}
+
+void publishTask(void *parameter) {
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xFrequency = 1000 / portTICK_PERIOD_MS; // 1 second
+
+    for(;;) {
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
+        if (xSemaphoreTake(xSemaphore, (TickType_t)50) == pdTRUE) {
+            readTemperatureSensors();
+            publishMQTTData();
+            xSemaphoreGive(xSemaphore);
+        } else {
+            logMessage(LOG_LEVEL_WARN, "Failed to take semaphore in publishTask.");
+        }
     }
 }
