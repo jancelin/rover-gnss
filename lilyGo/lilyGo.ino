@@ -57,16 +57,17 @@ DeviceAddress Thermometer;
 int deviceCount = 0;
 float temp = 0;
 
-const char* ssid = "ici";
+const char* ssid = "buoy";
 const char* password = "12345678";
-const char* mqtt_server = "mavi-mqtt.centipede.fr";
-const int mqtt_port = 8090;
+const char* mqtt_server = "192.168.182.208"; //"mavi-mqtt.centipede.fr";
+const int mqtt_port = 1883; //8090;
 const char* mqtt_output = "lilygo/data";
 const char* mqtt_input = "lilygo/input";
 const char* mqtt_log = "lilygo/log";
 const char* mqtt_user = "LilyGo";
 const char* mqtt_password = "password";
 const char mqtt_UUID[] = "LilyGo-RT";
+const int publish_freq = 1000; //frequence de publication des messages en millisecondes
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -85,11 +86,11 @@ int httpPort = 2101;
 char* mntpnt = "CT";
 char* user = "rover-gnss-tester";
 char* passwd = "";
-NTRIPClient ntrip_c;
 
+//ntrip client
+NTRIPClient ntrip_c;
 const char* udpAddress = "192.168.1.255";
 const int udpPort = 9999;
-
 int trans = 3;
 
 WiFiUDP udp;
@@ -561,12 +562,12 @@ void nmeaTask(void *parameter) {
 
 void publishTask(void *parameter) {
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = 1000 / portTICK_PERIOD_MS; // 1 second
+    const TickType_t xFrequency = publish_freq / portTICK_PERIOD_MS; // 1 second
 
     for(;;) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
-        if (xSemaphoreTake(xSemaphore, (TickType_t)50) == pdTRUE) {
+        if (xSemaphoreTake(xSemaphore, (TickType_t)publish_freq ) == pdTRUE) {
             readTemperatureSensors();
             publishMQTTData();
             xSemaphoreGive(xSemaphore);
