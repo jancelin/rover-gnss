@@ -111,6 +111,10 @@ void nmeaTask(void *parameter);
 
 SemaphoreHandle_t xSemaphore;
 
+TinyGPSCustom gnssGeoidElv(gps, "GNGGA", 11);
+TinyGPSCustom gnssFixMode(gps, "GNGGA", 6);
+TinyGPSCustom gnssPDOP(gps, "GNGSA", 15);
+TinyGPSCustom gnssHDOP(gps, "GNGSA", 16);
 
 void setup() {
     pinMode(POWER_PIN, OUTPUT);
@@ -313,6 +317,10 @@ void readGNSSData() {
         while (MySerial.available() > 0) {
             char c = MySerial.read();
             gps.encode(c);
+             // Afficher la qualité GPS lorsque le champ est mis à jour
+            if (gnssFixMode.isUpdated()) {
+                logMessage(LOG_LEVEL_INFO, "GNSS fix mode: ", gnssFixMode.value());
+            }
         }
         xSemaphoreGive(xSemaphore);
     }
@@ -323,9 +331,9 @@ void displayGNSSData() {
     if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
         if (gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
             char timeBuffer[30];
-            snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d",
+            snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d,%02d",
                      gps.date.year(), gps.date.month(), gps.date.day(),
-                     gps.time.hour(), gps.time.minute(), gps.time.second());
+                     gps.time.hour(), gps.time.minute(), gps.time.second(),gps.time.centisecond());
 
             logMessage(LOG_LEVEL_INFO, "Time: ", timeBuffer);
             logMessage(LOG_LEVEL_INFO, "LONG = ", gps.location.lng(), 8);
@@ -343,22 +351,30 @@ void displayGNSSData() {
 void publishMQTTData() {
     if (client.connected() && gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
         char timeBuffer[30];
-        snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d",
+        snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d,%02d",
                  gps.date.year(), gps.date.month(), gps.date.day(),
-                 gps.time.hour(), gps.time.minute(), gps.time.second());
+                 gps.time.hour(), gps.time.minute(), gps.time.second(),gps.time.centisecond());
         
         float waterTemp = sensors.getTempCByIndex(0);
         if (waterTemp == DEVICE_DISCONNECTED_C) {
             waterTemp = 0; // Set temperature to 0 if no sensor is connected
         }
+        //transform NMEA geoid+alt to elevation
+        float alt = gps.altitude.meters();
+        float geoid_elev = atof(gnssGeoidElv.value());
+        float elevation = alt + geoid_elev;
 
         String json = "{\"user\":\"" + (String)mqtt_user +
-                      "\",\"Temperature_Water\":\"" + String(waterTemp) +
-                      "\",\"Lon\":\"" + String(gps.location.lng(), 8) +
-                      "\",\"Lat\":\"" + String(gps.location.lat(), 8) +
-                      "\",\"Alt\":\"" + String(gps.altitude.meters(), 3) +
-                      "\",\"Quality\":\"" + String(gps.hdop.value()) +
-                      "\",\"Satellites\":\"" + String(gps.satellites.value()) +
+                      "\",\"Lon\":\"" + String(gps.location.lng(), 9) +
+                      "\",\"Lat\":\"" + String(gps.location.lat(), 9) +
+                      //"\",\"Geoid_elev\":\"" + String(gnssGeoidElv.value()) +
+                      //"\",\"Alt\":\"" + String(gps.altitude.meters(), 3) +
+                      "\",\"Elev\":\"" + String(elevation,3) +
+                      "\",\"Sat\":\"" + String(gps.satellites.value()) +
+                      "\",\"fix\":\"" + String(gnssFixMode.value()) + //1.gps fix 2.dgps 4.RTK 5.Float
+                      "\",\"HDOP\":\"" + String(gnssHDOP.value(), 4) +
+                      "\",\"PDOP\":\"" + String(gnssPDOP.value(), 4) +
+                      "\",\"Temp\":\"" + String(waterTemp) +
                       "\",\"Time\":\"" + String(timeBuffer) + "\"}";
         
         if (client.publish(mqtt_output, json.c_str())) {
