@@ -10,6 +10,7 @@
 #include <TinyGPSPlus.h>
 #include <PubSubClient.h>
 #include <BluetoothSerial.h>
+#include <Preferences.h>
 
 // Définition du niveau de log
 #define LOG_LEVEL_NONE  0
@@ -27,26 +28,26 @@
 #define ONE_WIRE_BUS 0
 
 // WiFi configuration
-extern const char* ssid;
-extern const char* password;
+extern char ssid[64];
+extern char password[64];
 
 // MQTT configuration
-extern const char* mqtt_server;
-extern const int mqtt_port;
-extern const char* mqtt_output;
-extern const char* mqtt_input;
-extern const char* mqtt_log;
-extern const char* mqtt_user;
-extern const char* mqtt_password;
+extern char mqtt_server[64];
+extern int mqtt_port;
+extern char mqtt_output[64];
+extern char mqtt_input[64];
+extern char mqtt_log[64];
+extern char mqtt_user[64];
+extern char mqtt_password[64];
 extern const char mqtt_UUID[];
-extern const int publish_freq;
+extern int publish_freq;
 
 // NTRIP configuration
-extern char* host;
+extern char host[64];
 extern int httpPort;
-extern char* mntpnt;
-extern char* user;
-extern char* passwd;
+extern char mntpnt[32];
+extern char user[32];
+extern char passwd[32];
 
 // Network configuration
 extern IPAddress server;
@@ -83,5 +84,10 @@ extern TinyGPSCustom gnssGeoidElv;
 extern TinyGPSCustom gnssFixMode;
 extern TinyGPSCustom gnssPDOP;
 extern TinyGPSCustom gnssHDOP;
+//Web
+extern Preferences preferences;
+void loadPreferences();
+void savePreferences();
+void resetPreferences();
 
 #endif // CONFIG_H

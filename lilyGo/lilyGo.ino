@@ -15,10 +15,15 @@ void setup() {
     locateDevices();
     printDeviceAddresses();
 
+    loadPreferences();
+
     setup_wifi();
     client.setServer(mqtt_server, mqtt_port);
     client.setCallback(callback);
 
+    // Initialiser le serveur web
+    setupWebServer();
+    
     connectToWiFi();
     requestSourceTable();
     requestMountPointRawData();
@@ -26,7 +31,11 @@ void setup() {
     // Initialiser le mutex
     xSemaphore = xSemaphoreCreateMutex();
 
+    // init Bluetooth
     setup_bt();
+
+
+
     // Création de la tâche FreeRTOS pour les données NMEA
     xTaskCreatePinnedToCore(
         nmeaTask,          // Fonction de la tâche
@@ -80,6 +89,7 @@ void loop() {
     }
 
     handleNTRIPData();
+    webServer.handleClient(); // Handle web server requests
 }
 
 //NTRIP
