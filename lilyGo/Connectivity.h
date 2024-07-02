@@ -17,5 +17,8 @@ void setupWebServer();
 void handleRoot();
 void handleSave();
 void handleNotFound();
+void checkWiFiStatus();
+void switchToAPMode();
+void tryReconnectWiFi();
 
 #endif // CONNECTIVITY_H

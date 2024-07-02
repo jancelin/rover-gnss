@@ -60,6 +60,9 @@ TinyGPSCustom gnssGeoidElv(gps, "GNGGA", 11);
 TinyGPSCustom gnssFixMode(gps, "GNGGA", 6);
 TinyGPSCustom gnssPDOP(gps, "GNGSA", 15);
 TinyGPSCustom gnssHDOP(gps, "GNGSA", 16);
+//wifi
+unsigned long lastAPCheckTime = 0;
+const unsigned long apCheckInterval = 120000; //check si wifi OK pendant wifi AP
 
 //Web
 void loadPreferences() {

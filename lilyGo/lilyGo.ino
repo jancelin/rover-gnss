@@ -21,12 +21,11 @@ void setup() {
     client.setServer(mqtt_server, mqtt_port);
     client.setCallback(callback);
 
-    // Initialiser le serveur web
-    setupWebServer();
-    
     connectToWiFi();
-    requestSourceTable();
-    requestMountPointRawData();
+    if (!isAPMode) { 
+        requestSourceTable();
+        requestMountPointRawData();
+    }
 
     // Initialiser le mutex
     xSemaphore = xSemaphoreCreateMutex();
@@ -34,7 +33,8 @@ void setup() {
     // init Bluetooth
     setup_bt();
 
-
+    // Initialiser le serveur web
+    setupWebServer();
 
     // Création de la tâche FreeRTOS pour les données NMEA
     xTaskCreatePinnedToCore(
@@ -59,37 +59,54 @@ void setup() {
     );
 }
 
-
 void loop() {
-    long now = millis();
-
-    // Handle Wi-Fi reconnection
-    if (WiFi.status() != WL_CONNECTED && (now - lastWifiReconnectAttempt > wifiReconnectInterval)) {
-        lastWifiReconnectAttempt = now;
-        connectToWiFi();
-    }
-
-    // Handle MQTT reconnection
-    if (!client.connected() && (now - lastMqttReconnectAttempt > mqttReconnectInterval)) {
-        lastMqttReconnectAttempt = now;
-        reconnectMQTT();
+    if (isAPMode) {
+        checkWiFiStatus(); // Ajoutez cette ligne
     } else {
-        client.loop();
-    }
+        long now = millis();
 
-    // Handle NTRIP reconnection
-    if (!ntripConnected && (now - lastNtripReconnectAttempt > ntripReconnectInterval)) {
-        lastNtripReconnectAttempt = now;
-        reconnectNTRIP();
-    }
+        // Handle Wi-Fi reconnection
+        if (WiFi.status() != WL_CONNECTED && (now - lastWifiReconnectAttempt > wifiReconnectInterval)) {
+            lastWifiReconnectAttempt = now;
+            connectToWiFi();
 
-    if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
-        readGNSSData();
-        xSemaphoreGive(xSemaphore);
-    }
+            // If still not connected after 20 seconds, switch to AP mode
+            unsigned long startAttemptTime = millis();
+            while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 20000) {
+                delay(500);
+                logMessage(LOG_LEVEL_DEBUG, ".");
+            }
 
-    handleNTRIPData();
-    webServer.handleClient(); // Handle web server requests
+            if (WiFi.status() != WL_CONNECTED) {
+                tryReconnectWiFi();
+                return; // Sortir de loop pour éviter d'exécuter le reste du code
+            }
+        }
+
+        // Handle MQTT reconnection
+        if (WiFi.status() == WL_CONNECTED) {
+            if (!client.connected() && (now - lastMqttReconnectAttempt > mqttReconnectInterval)) {
+                lastMqttReconnectAttempt = now;
+                reconnectMQTT();
+            } else {
+                client.loop();
+            }
+        }
+
+        // Handle NTRIP reconnection
+        if (!ntripConnected && (now - lastNtripReconnectAttempt > ntripReconnectInterval)) {
+            lastNtripReconnectAttempt = now;
+            reconnectNTRIP();
+        }
+
+        if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
+            readGNSSData();
+            xSemaphoreGive(xSemaphore);
+        }
+
+        handleNTRIPData();
+        webServer.handleClient(); // Handle web server requests
+    }
 }
 
 //NTRIP
@@ -176,7 +193,11 @@ void publishMQTTData() {
             logMessage(LOG_LEVEL_WARN, "Failed to send MQTT message");
         }
     } else {
+      if (!isAPMode) {
         logMessage(LOG_LEVEL_WARN, "GNSS data not valid. Data not sent.");
+      } else { 
+        logMessage(LOG_LEVEL_DEBUG, "");
+      }
     }
 }
 

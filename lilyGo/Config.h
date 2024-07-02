@@ -89,5 +89,11 @@ extern Preferences preferences;
 void loadPreferences();
 void savePreferences();
 void resetPreferences();
+void requestSourceTable(); 
+void requestMountPointRawData();
+//Wifi AP
+extern bool isAPMode; 
+extern unsigned long lastAPCheckTime; // Ajoutez cette ligne
+extern const unsigned long apCheckInterval;
 
 #endif // CONFIG_H
