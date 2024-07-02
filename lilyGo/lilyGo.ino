@@ -142,28 +142,6 @@ void readGNSSData() {
     }
 }
 
-
-void displayGNSSData() {
-    if (xSemaphoreTake(xSemaphore, (TickType_t)10) == pdTRUE) {
-        if (gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
-            char timeBuffer[30];
-            snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d,%02d",
-                     gps.date.year(), gps.date.month(), gps.date.day(),
-                     gps.time.hour(), gps.time.minute(), gps.time.second(),gps.time.centisecond());
-
-            logMessage(LOG_LEVEL_INFO, "Time: ", timeBuffer);
-            logMessage(LOG_LEVEL_INFO, "LONG = ", gps.location.lng(), 8);
-            logMessage(LOG_LEVEL_INFO, "LAT = ", gps.location.lat(), 8);
-            logMessage(LOG_LEVEL_INFO, "ALT = ", gps.altitude.meters(), 3);
-            logMessage(LOG_LEVEL_INFO, "Quality = ", gps.hdop.value());
-            logMessage(LOG_LEVEL_INFO, "Satellites = ", gps.satellites.value());
-        } else {
-            logMessage(LOG_LEVEL_WARN, "GNSS data not available");
-        }
-        xSemaphoreGive(xSemaphore);
-    }
-}
-
 void publishMQTTData() {
     if (client.connected() && gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
         char timeBuffer[30];
