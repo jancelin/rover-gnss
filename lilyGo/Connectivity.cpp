@@ -168,33 +168,6 @@ void setupWebServer() {
     logMessage(LOG_LEVEL_INFO, "HTTP server started");
 }
 
-void handleRoot() {
-    if (isAPMode) {
-        String html = "<html><body><h1>Configuration</h1>"
-                      "<form action=\"/save\" method=\"post\">"
-                      "SSID: <input type=\"text\" name=\"ssid\" value=\"" + String(ssid) + "\"><br>"
-                      "Password: <input type=\"text\" name=\"password\" value=\"" + String(password) + "\"><br>"
-                      "MQTT Server: <input type=\"text\" name=\"mqtt_server\" value=\"" + String(mqtt_server) + "\"><br>"
-                      "MQTT Port: <input type=\"text\" name=\"mqtt_port\" value=\"" + String(mqtt_port) + "\"><br>"
-                      "MQTT Output: <input type=\"text\" name=\"mqtt_output\" value=\"" + String(mqtt_output) + "\"><br>"
-                      "MQTT Input: <input type=\"text\" name=\"mqtt_input\" value=\"" + String(mqtt_input) + "\"><br>"
-                      "MQTT Log: <input type=\"text\" name=\"mqtt_log\" value=\"" + String(mqtt_log) + "\"><br>"
-                      "MQTT User: <input type=\"text\" name=\"mqtt_user\" value=\"" + String(mqtt_user) + "\"><br>"
-                      "MQTT Password: <input type=\"text\" name=\"mqtt_password\" value=\"" + String(mqtt_password) + "\"><br>"
-                      "Publish Frequency: <input type=\"text\" name=\"publish_freq\" value=\"" + String(publish_freq) + "\"><br>"
-                      "NTRIP Host: <input type=\"text\" name=\"host\" value=\"" + String(host) + "\"><br>"
-                      "NTRIP Port: <input type=\"text\" name=\"httpPort\" value=\"" + String(httpPort) + "\"><br>"
-                      "NTRIP Mount Point: <input type=\"text\" name=\"mntpnt\" value=\"" + String(mntpnt) + "\"><br>"
-                      "NTRIP User: <input type=\"text\" name=\"user\" value=\"" + String(user) + "\"><br>"
-                      "NTRIP Password: <input type=\"text\" name=\"passwd\" value=\"" + String(passwd) + "\"><br>"
-                      "<input type=\"submit\" value=\"Save\">"
-                      "</form></body></html>";
-        webServer.send(200, "text/html", html);
-    } else {
-        webServer.send(200, "text/html", "<html><body><h1>WiFi is connected. Configuration not accessible.</h1></body></html>");
-    }
-}
-
 void handleSave() {
     if (isAPMode) {
         String ssidInput = webServer.arg("ssid");
@@ -243,3 +216,183 @@ void handleNotFound() {
     webServer.send(404, "text/plain", "Not Found");
 }
 
+void handleRoot() {
+    String html = R"rawliteral(
+        <html>
+        <head>
+            <title>Rover GNSS Configuration</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    padding: 0 15px;
+                    margin: 15px;
+                    max-width: 90%;
+                }
+                .header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 20px 0;
+                }
+                .header img {
+                    width: 50px;
+                    height: 50px;
+                    margin-right: 20px;
+                }
+                h1 {
+                    font-size: 60px;
+                    margin: 0;
+                    text-align: center;
+                }
+                h2 {
+                    font-size: 50px;
+                    margin: 20px 0 10px;
+                    color: #333;
+                    text-align: center;
+                }
+                form {
+                    display: flex;
+                    flex-direction: column;
+                }
+                label {
+                    font-weight: bold;
+                    margin: 10px 0 5px;
+                    font-size: 36px;
+                }
+                input[type="text"],
+                input[type="password"],
+                input[type="number"] {
+                    padding: 15px;
+                    margin-bottom: 20px;
+                    border: 1px solid #ccc;
+                    border-radius: 5px;
+                    width: 100%;
+                    font-size: 40px;
+                    box-sizing: border-box;
+                    text-align: center;
+                }
+                input[type="submit"] {
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 15px;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 50px;
+                    margin-top: 20px;
+                }
+                input[type="submit"]:hover {
+                    background-color: #45a049;
+                }
+                .section {
+                    margin-bottom: 30px;
+                    padding: 20px;
+                    background: #fff;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    border-radius: 10px;
+                }
+                .password-container {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                }
+                .password-container input[type="password"],
+                .password-container input[type="text"] {
+                    flex: 1;
+                }
+                .password-container button {
+                    position: absolute;
+                    right: 10px;
+                    padding: 10px;
+                    font-size: 20px;
+                    border: none;
+                    background: #ccc;
+                    cursor: pointer;
+                    border-radius: 5px;
+                }
+                .password-container button:hover {
+                    background: #bbb;
+                }
+            </style>
+        </head>
+        <body>
+          <div class="header">
+            <div style="text-align: center; line-height: 1;">
+              <span style="font-size: 34px; display: block;">&#x1F6F0;&#x1F6F0;&#x1F6F0;</span>
+              <br>
+              <span style="font-size: 34px;">&#x1F4E1;</span>
+              &#x2E;&#x2E;&#x2E;&#x2E; 
+              <span style="font-size: 64px;">&#x1F41B;</span>
+            </div>
+            <h1> Rover GNSS Conf</h1>
+          </div>
+            </div>
+                <form action="/save" method="post">
+                    <div class="section">
+                        <h2>WiFi Configuration</h2>
+                        <label for="ssid">SSID:</label>
+                        <input type="text" id="ssid" name="ssid" value=")rawliteral" + String(ssid) + R"rawliteral(">
+                        <label for="password">Password:</label>
+                        <div class="password-container">
+                            <input type="password" id="password" name="password" value=")rawliteral" + String(password) + R"rawliteral(">
+                            <button type="button" onclick="togglePasswordVisibility('password')">&#128065;</button>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <h2>NTRIP Configuration</h2>
+                        <label for="host">NTRIP Host:</label>
+                        <input type="text" id="host" name="host" value=")rawliteral" + String(host) + R"rawliteral(">
+                        <label for="httpPort">NTRIP Port:</label>
+                        <input type="number" id="httpPort" name="httpPort" value=")rawliteral" + String(httpPort) + R"rawliteral(">
+                        <label for="mntpnt">NTRIP Mount Point:</label>
+                        <input type="text" id="mntpnt" name="mntpnt" value=")rawliteral" + String(mntpnt) + R"rawliteral(">
+                        <label for="user">NTRIP User:</label>
+                        <input type="text" id="user" name="user" value=")rawliteral" + String(user) + R"rawliteral(">
+                        <label for="passwd">NTRIP Password:</label>
+                        <div class="password-container">
+                            <input type="password" id="passwd" name="passwd" value=")rawliteral" + String(passwd) + R"rawliteral(">
+                            <button type="button" onclick="togglePasswordVisibility('passwd')">&#128065;</button>
+                        </div>
+                    </div>                    
+                    <div class="section">
+                        <h2>MQTT Configuration</h2>
+                        <label for="mqtt_server">MQTT Server:</label>
+                        <input type="text" id="mqtt_server" name="mqtt_server" value=")rawliteral" + String(mqtt_server) + R"rawliteral(">
+                        <label for="mqtt_port">MQTT Port:</label>
+                        <input type="number" id="mqtt_port" name="mqtt_port" value=")rawliteral" + String(mqtt_port) + R"rawliteral(">
+                        <label for="mqtt_output">MQTT Output:</label>
+                        <input type="text" id="mqtt_output" name="mqtt_output" value=")rawliteral" + String(mqtt_output) + R"rawliteral(">
+                        <label for="mqtt_input">MQTT Input:</label>
+                        <input type="text" id="mqtt_input" name="mqtt_input" value=")rawliteral" + String(mqtt_input) + R"rawliteral(">
+                        <label for="mqtt_log">MQTT Log:</label>
+                        <input type="text" id="mqtt_log" name="mqtt_log" value=")rawliteral" + String(mqtt_log) + R"rawliteral(">
+                        <label for="mqtt_user">MQTT User:</label>
+                        <input type="text" id="mqtt_user" name="mqtt_user" value=")rawliteral" + String(mqtt_user) + R"rawliteral(">
+                        <label for="mqtt_password">MQTT Password:</label>
+                        <div class="password-container">
+                            <input type="password" id="mqtt_password" name="mqtt_password" value=")rawliteral" + String(mqtt_password) + R"rawliteral(">
+                            <button type="button" onclick="togglePasswordVisibility('mqtt_password')">&#128065;</button>
+                        </div>
+                        <label for="publish_freq">Publish Frequency:</label>
+                        <input type="number" id="publish_freq" name="publish_freq" value=")rawliteral" + String(publish_freq) + R"rawliteral(">
+                    </div>
+                    <input type="submit" value="Save">
+                </form>
+            </div>
+            <script>
+                function togglePasswordVisibility(id) {
+                    var field = document.getElementById(id);
+                    var fieldType = field.getAttribute('type') === 'password' ? 'text' : 'password';
+                    field.setAttribute('type', fieldType);
+                }
+            </script>
+        </body>
+        </html>
+    )rawliteral";
+    webServer.send(200, "text/html", html);
+}
