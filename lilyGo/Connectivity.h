@@ -7,7 +7,6 @@
 #include <WebServer.h>
 
 extern WebServer webServer;
-
 void setup_wifi();
 void connectToWiFi();
 void reconnectMQTT();

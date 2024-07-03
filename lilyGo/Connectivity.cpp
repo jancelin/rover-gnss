@@ -1,5 +1,6 @@
 // Connectivity.cpp
 #include "Connectivity.h"
+#include <ESPmDNS.h>
 
 WebServer webServer(80);
 bool isAPMode = false;
@@ -66,6 +67,16 @@ void switchToAPMode() {
     logMessage(LOG_LEVEL_INFO, "AP IP address: ", WiFi.softAPIP().toString().c_str());
     isAPMode = true;
     lastAPCheckTime = millis(); // Initialiser le timer pour le mode AP
+
+    // Réinitialiser mDNS en mode AP
+    MDNS.end();  // Arrêter mDNS s'il était en cours d'exécution
+    if (!MDNS.begin("rover")) {  // Redémarrer mDNS avec le même nom
+        logMessage(LOG_LEVEL_ERROR, "Error setting up MDNS responder in AP mode!");
+        while (1) {
+            delay(1000);
+        }
+    }
+    logMessage(LOG_LEVEL_INFO, "mDNS responder started in AP mode");
     return;
 }
 
@@ -169,7 +180,6 @@ void setupWebServer() {
 }
 
 void handleSave() {
-    if (isAPMode) {
         String ssidInput = webServer.arg("ssid");
         String passwordInput = webServer.arg("password");
         String mqtt_serverInput = webServer.arg("mqtt_server");
@@ -207,9 +217,6 @@ void handleSave() {
         webServer.send(200, "text/html", "<html><body><h1>Saved. Restarting...</h1></body></html>");
         delay(2000);
         ESP.restart();
-    } else {
-        webServer.send(200, "text/html", "<html><body><h1>WiFi is connected. Configuration not accessible.</h1></body></html>");
-    }
 }
 
 void handleNotFound() {

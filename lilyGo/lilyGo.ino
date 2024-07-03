@@ -1,6 +1,7 @@
 #include "Config.h"
 #include "Logger.h"
 #include "Connectivity.h"
+#include <ESPmDNS.h>
 
 void setup() {
     pinMode(POWER_PIN, OUTPUT);
@@ -35,6 +36,14 @@ void setup() {
 
     // Initialiser le serveur web
     setupWebServer();
+     // Initialisation de mDNS
+    if (!MDNS.begin("rover")) {  // Nom du mDNS, vous accéderez avec http://rover.local
+        Serial.println("Error setting up MDNS responder!");
+        while (1) {
+            delay(1000);
+        }
+    }
+    Serial.println("mDNS responder started");
 
     // Création de la tâche FreeRTOS pour les données NMEA
     xTaskCreatePinnedToCore(
@@ -61,7 +70,7 @@ void setup() {
 
 void loop() {
     if (isAPMode) {
-        checkWiFiStatus(); // Ajoutez cette ligne
+        checkWiFiStatus();
     } else {
         long now = millis();
 
