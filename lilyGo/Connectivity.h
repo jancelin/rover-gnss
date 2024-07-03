@@ -19,5 +19,6 @@ void handleNotFound();
 void checkWiFiStatus();
 void switchToAPMode();
 void tryReconnectWiFi();
+void handleIP(); 
 
 #endif // CONNECTIVITY_H

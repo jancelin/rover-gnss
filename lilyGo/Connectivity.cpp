@@ -174,9 +174,16 @@ void setup_bt() {
 void setupWebServer() {
     webServer.on("/", handleRoot);
     webServer.on("/save", handleSave);
+    webServer.on("/ip", handleIP);
     webServer.onNotFound(handleNotFound);
     webServer.begin();
     logMessage(LOG_LEVEL_INFO, "HTTP server started");
+}
+
+void handleIP() {
+    String ipAddress = WiFi.localIP().toString();
+    String html = "<html><body><h1>Current IP Address</h1><p>" + ipAddress + "</p></body></html>";
+    webServer.send(200, "text/html", html);
 }
 
 void handleSave() {
@@ -401,6 +408,7 @@ void handleRoot() {
                     </div>
                     <input type="submit" value="Save">
                 </form>
+                <a href="/ip">View Current IP Address</a>
             </div>
             <script>
                 function togglePasswordVisibility(id) {
@@ -414,4 +422,3 @@ void handleRoot() {
     )rawliteral";
     webServer.send(200, "text/html", html);
 }
-
