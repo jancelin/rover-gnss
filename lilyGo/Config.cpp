@@ -17,6 +17,7 @@ char mqtt_user[64] = "LilyGo";
 char mqtt_password[64] = "password";
 const char mqtt_UUID[] = "LilyGo-RT";
 int publish_freq = 1000; // fréquence de publication des messages en millisecondes
+bool mqtt_enabled = true; // MQTT est activé par défaut
 
 // NTRIP configuration
 char host[64] = "caster.centipede.fr";
@@ -110,6 +111,8 @@ void loadPreferences() {
     
     temp = preferences.getString("passwd", passwd);
     temp.toCharArray(passwd, sizeof(passwd));
+
+    mqtt_enabled = preferences.getBool("mqtt_enabled", true);
     
     preferences.end();
 }
@@ -131,6 +134,7 @@ void savePreferences() {
     preferences.putString("mntpnt", mntpnt);
     preferences.putString("user", user);
     preferences.putString("passwd", passwd);
+    preferences.putBool("mqtt_enabled", mqtt_enabled);
     preferences.end();
 }
 

@@ -103,7 +103,7 @@ void connectToWiFi() {
         isAPMode = false; // Reset AP mode flag
 
         // Reinitialize MQTT and NTRIP connections after WiFi reconnects
-        if (!isAPMode) { // Ajoutez cette vérification
+        if (!isAPMode) { 
             if (client.connected()) {
                 client.disconnect();
             }
@@ -122,7 +122,7 @@ void connectToWiFi() {
 }
 
 void reconnectMQTT() {
-    if (isAPMode) return;
+    if (!mqtt_enabled || isAPMode) return;
     unsigned long startAttemptTime = millis();
     while (!client.connected() && millis() - startAttemptTime < mqttReconnectInterval) {
         logMessage(LOG_LEVEL_INFO, "Attempting MQTT connection...");
@@ -180,43 +180,45 @@ void setupWebServer() {
 }
 
 void handleSave() {
-        String ssidInput = webServer.arg("ssid");
-        String passwordInput = webServer.arg("password");
-        String mqtt_serverInput = webServer.arg("mqtt_server");
-        int mqtt_portInput = webServer.arg("mqtt_port").toInt();
-        String mqtt_outputInput = webServer.arg("mqtt_output");
-        String mqtt_inputInput = webServer.arg("mqtt_input");
-        String mqtt_logInput = webServer.arg("mqtt_log");
-        String mqtt_userInput = webServer.arg("mqtt_user");
-        String mqtt_passwordInput = webServer.arg("mqtt_password");
-        int publish_freqInput = webServer.arg("publish_freq").toInt();
-        String hostInput = webServer.arg("host");
-        int httpPortInput = webServer.arg("httpPort").toInt();
-        String mntpntInput = webServer.arg("mntpnt");
-        String userInput = webServer.arg("user");
-        String passwdInput = webServer.arg("passwd");
+    String ssidInput = webServer.arg("ssid");
+    String passwordInput = webServer.arg("password");
+    String mqtt_serverInput = webServer.arg("mqtt_server");
+    int mqtt_portInput = webServer.arg("mqtt_port").toInt();
+    String mqtt_outputInput = webServer.arg("mqtt_output");
+    String mqtt_inputInput = webServer.arg("mqtt_input");
+    String mqtt_logInput = webServer.arg("mqtt_log");
+    String mqtt_userInput = webServer.arg("mqtt_user");
+    String mqtt_passwordInput = webServer.arg("mqtt_password");
+    int publish_freqInput = webServer.arg("publish_freq").toInt();
+    String hostInput = webServer.arg("host");
+    int httpPortInput = webServer.arg("httpPort").toInt();
+    String mntpntInput = webServer.arg("mntpnt");
+    String userInput = webServer.arg("user");
+    String passwdInput = webServer.arg("passwd");
+    bool mqtt_enabledInput = webServer.hasArg("mqtt_enabled");
 
-        ssidInput.toCharArray(ssid, sizeof(ssid));
-        passwordInput.toCharArray(password, sizeof(password));
-        mqtt_serverInput.toCharArray(mqtt_server, sizeof(mqtt_server));
-        mqtt_port = mqtt_portInput;
-        mqtt_outputInput.toCharArray(mqtt_output, sizeof(mqtt_output));
-        mqtt_inputInput.toCharArray(mqtt_input, sizeof(mqtt_input));
-        mqtt_logInput.toCharArray(mqtt_log, sizeof(mqtt_log));
-        mqtt_userInput.toCharArray(mqtt_user, sizeof(mqtt_user));
-        mqtt_passwordInput.toCharArray(mqtt_password, sizeof(mqtt_password));
-        publish_freq = publish_freqInput;
-        hostInput.toCharArray(host, sizeof(host));
-        httpPort = httpPortInput;
-        mntpntInput.toCharArray(mntpnt, sizeof(mntpnt));
-        userInput.toCharArray(user, sizeof(user));
-        passwdInput.toCharArray(passwd, sizeof(passwd));
+    ssidInput.toCharArray(ssid, sizeof(ssid));
+    passwordInput.toCharArray(password, sizeof(password));
+    mqtt_serverInput.toCharArray(mqtt_server, sizeof(mqtt_server));
+    mqtt_port = mqtt_portInput;
+    mqtt_outputInput.toCharArray(mqtt_output, sizeof(mqtt_output));
+    mqtt_inputInput.toCharArray(mqtt_input, sizeof(mqtt_input));
+    mqtt_logInput.toCharArray(mqtt_log, sizeof(mqtt_log));
+    mqtt_userInput.toCharArray(mqtt_user, sizeof(mqtt_user));
+    mqtt_passwordInput.toCharArray(mqtt_password, sizeof(mqtt_password));
+    publish_freq = publish_freqInput;
+    hostInput.toCharArray(host, sizeof(host));
+    httpPort = httpPortInput;
+    mntpntInput.toCharArray(mntpnt, sizeof(mntpnt));
+    userInput.toCharArray(user, sizeof(user));
+    passwdInput.toCharArray(passwd, sizeof(passwd));
+    mqtt_enabled = mqtt_enabledInput;
 
-        savePreferences();
+    savePreferences();
 
-        webServer.send(200, "text/html", "<html><body><h1>Saved. Restarting...</h1></body></html>");
-        delay(2000);
-        ESP.restart();
+    webServer.send(200, "text/html", "<html><body><h1>Saved. Restarting...</h1></body></html>");
+    delay(2000);
+    ESP.restart();
 }
 
 void handleNotFound() {
@@ -282,6 +284,10 @@ void handleRoot() {
                     font-size: 40px;
                     box-sizing: border-box;
                     text-align: center;
+                }
+                input[type="checkbox"] {
+                    transform: scale(4); /* Agrandir la checkbox */
+                    margin-right: 10px; /* Ajouter un espacement à droite de la checkbox */
                 }
                 input[type="submit"] {
                     background-color: #4CAF50;
@@ -367,7 +373,12 @@ void handleRoot() {
                         </div>
                     </div>                    
                     <div class="section">
-                        <h2>MQTT Configuration</h2>
+          <h2>MQTT Configuration</h2>
+                        <label for="mqtt_enabled">Enable MQTT:   </label>
+                        <input type="checkbox" id="mqtt_enabled" name="mqtt_enabled" style="transform: scale(2); margin-right: 10px;" )rawliteral" + String(mqtt_enabled ? "checked" : "") + R"rawliteral(>
+                        <br>
+                        <br>
+                        <br>
                         <label for="mqtt_server">MQTT Server:</label>
                         <input type="text" id="mqtt_server" name="mqtt_server" value=")rawliteral" + String(mqtt_server) + R"rawliteral(">
                         <label for="mqtt_port">MQTT Port:</label>
@@ -403,3 +414,4 @@ void handleRoot() {
     )rawliteral";
     webServer.send(200, "text/html", html);
 }
+

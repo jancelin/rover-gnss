@@ -93,7 +93,9 @@ void requestSourceTable();
 void requestMountPointRawData();
 //Wifi AP
 extern bool isAPMode; 
-extern unsigned long lastAPCheckTime; // Ajoutez cette ligne
+extern unsigned long lastAPCheckTime;
 extern const unsigned long apCheckInterval;
+//MQTT option
+extern bool mqtt_enabled;
 
 #endif // CONFIG_H

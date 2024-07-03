@@ -167,7 +167,7 @@ void handleMQTTConnection() {
 }
 
 void publishMQTTData() {
-    if (client.connected() && gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
+    if (mqtt_enabled && client.connected() && gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
         char timeBuffer[30];
         snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d,%02d",
                  gps.date.year(), gps.date.month(), gps.date.day(),
@@ -205,7 +205,7 @@ void publishMQTTData() {
       if (!isAPMode) {
         logMessage(LOG_LEVEL_WARN, "GNSS data not valid. Data not sent.");
       } else { 
-        logMessage(LOG_LEVEL_DEBUG, "");
+        logMessage(LOG_LEVEL_DEBUG, "Wait...");
       }
     }
 }
