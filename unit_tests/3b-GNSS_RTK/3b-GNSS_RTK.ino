@@ -12,9 +12,9 @@ const char* password = "12345678";
 IPAddress server(192, 168, 1, 100);  // IP address of the server
 int port = 80;            
 
-char* host = "castera.ntrip.eu.org";
+char* host = "caster.centipede.fr";
 int httpPort = 2101; // port 2101 is default port of NTRIP caster
-char* mntpnt = "V";
+char* mntpnt = "LIENSS";
 char* user   = "rover-gnss-tester";
 char* passwd = "";
 NTRIPClient ntrip_c;
@@ -87,7 +87,7 @@ void loop() {
         if (c == '\n' || c == '\r') {
             if (nmeaMessage.startsWith("$GNGGA")) {
                 ggaMessage = nmeaMessage;
-                //Serial.println("Extracted GGA: " + ggaMessage);  // Log extracted GGA message
+                // Serial.println("Extracted GGA: " + ggaMessage);  // Log extracted GGA message
             }
             nmeaMessage = "";
         } else {
@@ -100,7 +100,7 @@ void loop() {
     if (currentMillis - previousMillis >= interval) {
         previousMillis = currentMillis;
         if (ggaMessage.length() > 0) {
-            ntripClient.sendGGA(ggaMessage.c_str());
+            ntripClient.sendGGA(ggaMessage.c_str(), host, httpPort, user, passwd, mntpnt);
             Serial.println("Sent GGA: " + ggaMessage);  // Log sent GGA message
         }
     }
@@ -147,3 +147,4 @@ void loop() {
         }
     }
 }
+
