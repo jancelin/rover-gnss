@@ -28,13 +28,6 @@ void logMessage(int level, const char* message, float value, int decimals) {
     }
 }
 
-void logMessage(int level, const char* message, int32_t value) {
-    if (level <= LOG_LEVEL) {
-        Serial.print(message);
-        Serial.println(value);
-    }
-}
-
 void logMessage(int level, const char* message, uint32_t value) {
     if (level <= LOG_LEVEL) {
         Serial.print(message);

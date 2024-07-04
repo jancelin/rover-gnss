@@ -82,7 +82,7 @@ void switchToAPMode() {
 
 void tryReconnectWiFi() {
     if (WiFi.status() != WL_CONNECTED) {
-        logMessage(LOG_LEVEL_ERROR, "WiFi connection failed. Switching to AP mode during (minutes):", apCheckInterval /1000 /60);
+        logMessage(LOG_LEVEL_ERROR, "WiFi connection failed. Switching to AP mode during (minutes):", (uint32_t)apCheckInterval /1000 /60);
         switchToAPMode();
     }
 }
