@@ -11,8 +11,8 @@ class NTRIPClient : public WiFiClient{
   bool reqRaw(char* host,int &port,char* mntpnt,char* user,char* psw);      //request RAW data from Caster 
   bool reqRaw(char* host,int &port,char* mntpnt); //non user
   int readLine(char* buffer,int size);
+  void sendGGA(const char* ggaMessage); // Send GGA message to caster
 
-  
 };
 
 #endif

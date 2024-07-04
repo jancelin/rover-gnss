@@ -101,3 +101,15 @@ int NTRIPClient::readLine(char* _buffer,int size)
 
   return len;
 }
+
+void NTRIPClient::sendGGA(const char* ggaMessage) {
+  if (connected()) {
+    print(ggaMessage);
+    print("\r\n"); // Ajoutez une nouvelle ligne pour terminer le message
+    Serial.println("NTRIPClient sent GGA: " + String(ggaMessage));
+  } else {
+    Serial.println("NTRIPClient not connected");
+  }
+}
+
+
