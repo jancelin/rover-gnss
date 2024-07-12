@@ -97,29 +97,28 @@ int NTRIPClient::readLine(char* _buffer, int size) {
 }
 
 void NTRIPClient::sendGGA(const char* ggaMessage, const char* host, int port, const char* user, const char* passwd, const char* mntpnt) {
-    if (connected()) {
-        String p = String("GET /") + String(mntpnt) + String(" HTTP/1.0\r\n");
-        p += String("Host: ") + String(host) + String(":") + String(port) + String("\r\n");
-        p += String("User-Agent: NTRIP Client/buchedv1.01\r\n");
-        p += String("Accept: */*\r\n");
-        if (strlen(user) > 0) {
-            String auth = base64::encode(String(user) + ":" + String(passwd));
-            p += String("Authorization: Basic ") + auth + String("\r\n");
-        }
-        p += String("Connection: close\r\n");
-        p += String("\r\n");
-
-        print(p);
-        print(ggaMessage);
-        print("\r\n");
-        Serial.println("NTRIPClient sent GGA: " + String(ggaMessage));
-    } else {
+    if (!connected()) {
         Serial.println("NTRIPClient not connected, reconnecting...");
         if (!connect(host, port)) {
             Serial.println("Reconnection failed");
             return;
         }
-        sendGGA(ggaMessage, host, port, user, passwd, mntpnt);
     }
+
+    String p = String("GET /") + String(mntpnt) + String(" HTTP/1.0\r\n");
+    p += String("Host: ") + String(host) + String(":") + String(port) + String("\r\n");
+    p += String("User-Agent: NTRIP Client/buchedv1.01\r\n");
+    p += String("Accept: */*\r\n");
+    if (strlen(user) > 0) {
+        String auth = base64::encode(String(user) + ":" + String(passwd));
+        p += String("Authorization: Basic ") + auth + String("\r\n");
+    }
+    p += String("Connection: close\r\n");
+    p += String("\r\n");
+
+    print(p);
+    print(ggaMessage);
+    print("\r\n");
+    Serial.println("NTRIPClient sent GGA: " + String(ggaMessage));
 }
 

@@ -7,14 +7,14 @@ HardwareSerial MySerial(1);
 #define PIN_RX 27 
 #define POWER_PIN 25
 
-const char* ssid     = "buoy";
+const char* ssid     = "ici";
 const char* password = "12345678";
 IPAddress server(192, 168, 1, 100);  // IP address of the server
 int port = 80;            
 
-char* host = "caster.centipede.fr";
+char* host = "castera.ntrip.eu.org";
 int httpPort = 2101; // port 2101 is default port of NTRIP caster
-char* mntpnt = "LIENSS";
+char* mntpnt = "V";
 char* user   = "rover-gnss-tester";
 char* passwd = "";
 NTRIPClient ntrip_c;
@@ -32,6 +32,7 @@ String nmeaMessage = "";
 String ggaMessage = "";
 
 unsigned long previousMillis = 0;
+unsigned long currentMillis = 0; // Déclaration globale
 const long interval = 10000;  // Interval of 10 seconds
 
 void setup() {
@@ -80,6 +81,15 @@ void setup() {
 
 void loop() {
     WiFiClient client;
+    currentMillis = millis();
+    if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis;
+
+        // Assume ggaMessage is updated regularly with the correct GGA string
+        if (ggaMessage != "") {
+            ntrip_c.sendGGA(ggaMessage.c_str(), host, httpPort, user, passwd, mntpnt);
+        }
+    }
 
     // Read NMEA messages
     while (MySerial.available()) {
