@@ -201,8 +201,8 @@ void publishMQTTData() {
                       "\",\"Elev\":\"" + String(elevation,3) +
                       "\",\"Sat\":\"" + String(gps.satellites.value()) +
                       "\",\"fix\":\"" + String(gnssFixMode.value()) + //1.gps fix 2.dgps 4.RTK 5.Float
-                      "\",\"HDOP\":\"" + String(gnssHDOP.value(), 4) +
-                      "\",\"PDOP\":\"" + String(gnssPDOP.value(), 4) +
+                      //"\",\"HDOP\":\"" + String(gnssHDOP.value(), 4) +
+                      //"\",\"PDOP\":\"" + String(gnssPDOP.value(), 4) +
                       "\",\"Temp\":\"" + String(waterTemp) +
                       "\",\"Dist\":\"" + String(distance) +
                       "\",\"Time\":\"" + String(timeBuffer) + "\"}";
