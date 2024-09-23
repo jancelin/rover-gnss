@@ -8,7 +8,7 @@
 #define MQTT_LOG "your mqtt/log/chanel";
 #define MQTT_USER "MQTT USER"
 #define MQTT_PASSWORD "MQTT PASSWORD IF NEEDED";
-#define MQTT_UUID = "UUID FOR MQTT USER";
+#define MQTT_UUID "UUID FOR MQTT USER";
 
 #define NTRIP_SERVER_HOST "Adresse for Ntrip server"
 #define NTRIP_USER "YOUR NTRIP User"
