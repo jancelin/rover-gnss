@@ -7,7 +7,7 @@
 /* CONFIG for UART1 */
 #define PIN_RX 16
 #define PIN_TX 17 
-
+#define BT_NAME "Bluetooth_GNSS"
 HardwareSerial *RTCM{&Serial1};
 HardwareSerial *Receiver{&Serial2};
 
@@ -121,8 +121,9 @@ void onRtcmReceiveCb()
 void setup()
 {
     Serial.begin(BAUD_SERIAL);
-    SerialBT.begin("RoveF9pESP32_ROM"); // Bluetooth device name
+    SerialBT.begin(BT_NAME); // Bluetooth device name
     Serial.println("The device started, now you can pair it with bluetooth!");
+    Serial.println("Device name : " + (String)BT_NAME);
 
     Receiver->setRxBufferSize(RX_BUFFER_SIZE);
     Receiver->onReceive(onGnssReceiveCb, false);
@@ -155,8 +156,6 @@ void setup()
 
 void loop()
 {
-
-
     if (SerialBT.hasClient())
     {
         const size_t bufferSize = buffer.size();
