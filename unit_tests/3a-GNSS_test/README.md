@@ -14,7 +14,7 @@ Test de réception du temps GNSS
 Ce programme permet de tester la réception du temps GNSS communiqué par un récepteur GNSS via les trames NMEA `$GPGGA` et `$GPRMC`.
 
 ## Matériel
-- lilyGO 3.5;
+- [Esp32 Feather](https://www.gotronic.fr/art-carte-feather-esp32-v2-ada5400-35213.htm);
 - Drotek DP0601 RTK GNSS (XL F9P)
 
 ## Bibliothèque
@@ -32,7 +32,7 @@ L'ESP32 utilisera son port `Serialrx` pour recevoir les trames NMEA du récepteu
 
 Le montage conciste simplement à connecter le port série `Serial1` ( PIN TX 16 & RX 17) de l'ESP32 au port série `UART1` du recepteur Drotek.
 
-|LiLyGo|DP0601|
+|ESP32 |DP0601|
 |------|------|
 |RX|UART1 B3 (TX)|
 |Vin (5V)|UART1 B1 (5V)|
