@@ -45,9 +45,13 @@ long lastMsg = 0;
 char msg[50];
 int value = 0;
 int timeInterval = 3000;
+const long readDuration = 1000;  // Duration of NMEA reading in milliseconds
+unsigned long previousMillis = 0; // timer
+unsigned long currentMillis = 0;  // timer
 
 // TinyGPSPlus instance to store GNSS NMEA data (datetim, position, etc.)
 TinyGPSPlus gps;
+TinyGPSCustom gnssFixMode(gps, "GNGGA", 6);
 
 IPAddress server(192, 168, 1, 100);  // IP address of the server
 int port = 80;            
@@ -59,11 +63,13 @@ char* user   = NTRIP_USER;
 char* passwd = NTRIP_PASSWORD;
 bool sendGGA = true;
 NTRIPClient ntrip_c;
+String nmeaMessage = "";
+String ggaMessage = "";
 
 const char* udpAddress = "192.168.1.255";
 const int udpPort = 9999;
 
-int trans = 3;  //0 = serial, 1 = udp, 2 = tcp client, 3 = MySerial, 4 = myserial Choose which out you want use. for rs232 set 0 and connect tx f9p directly to rs232 module
+int trans = 3;  //0 = serial, 1 = udp, 2 = tcp client, 3 = MySerial - Choose which out you want use. for rs232 set 0 and connect tx f9p directly to rs232 module
 
 WiFiUDP udp;
 
@@ -138,6 +144,57 @@ void setup() {
 }
 
 void loop() {
+    
+  if (sendGGA) {
+      currentMillis = millis();
+        if (currentMillis - previousMillis >= timeInterval) {
+            previousMillis = currentMillis;
+
+            unsigned long readStartMillis = millis();
+            bool ggaFound = false;
+            while (millis() - readStartMillis < readDuration && !ggaFound) {
+                while (MySerial.available()) {
+                    char c = MySerial.read();
+                    if (c == '\n' || c == '\r') {
+                        if (nmeaMessage.startsWith("$GNGGA") || nmeaMessage.startsWith("$GPGGA")) {
+                            // Validation du format GGA
+                            int numFields = 0;
+                            for (char ch : nmeaMessage) {
+                                if (ch == ',') numFields++;
+                            }
+                            if (numFields == 14) { // 14 virgules attendues dans un message GGA complet
+                                ntrip_c.setLastGGA(nmeaMessage);                  // Stocker le dernier message GGA reçu
+                                Serial.println("Extracted GGA: " + nmeaMessage);  // Log du message GGA extrait
+                                ggaFound = true;                                  // Mettre à jour le drapeau pour arrêter la lecture
+                                break;                                            // Sortir de la boucle intérieure
+                            }
+                        }
+                        nmeaMessage = "";
+                    } else {
+                        nmeaMessage += c;
+                    }
+                }
+            }
+
+            // Send the last GGA message stored
+            String lastGGA = ntrip_c.getLastGGA();
+            if (lastGGA != "") {
+                ntrip_c.sendGGA(lastGGA.c_str(), host, httpPort, user, passwd, mntpnt);
+                Serial.println("Sent GGA: " + lastGGA);  // Log sent GGA message
+                lastGGA = "";
+                //Serial.println("Cleaned GGA");
+            } else {
+                Serial.println("No GGA message to send.");
+            }
+        }
+    }
+
+    // NTRIP Data Handling
+    while (ntrip_c.available()) {
+        char ch = ntrip_c.read();
+        MySerial.print(ch);
+    }
+
     long now = millis();
     if (now - lastMsg > timeInterval ) {
         lastMsg = now;
@@ -164,6 +221,12 @@ void loop() {
         Serial.print(gps.location.lng(),9);
         Serial.print(" - LAT = ");
         Serial.print(gps.location.lat(),9);
+        Serial.print(" - COURSE = ");
+        Serial.print(gps.course.value());
+        Serial.print(" - SATELLITES = ");
+        Serial.print(gps.satellites.value());
+        Serial.print(" - FIX MODE = ");
+        Serial.print(gnssFixMode.value());
         Serial.println();  
 
         sensors.requestTemperatures();   // request temperature conversion for all sensors
@@ -178,7 +241,11 @@ void loop() {
         }
         Serial.println("");
 
-        String json = "{\"user\":\""+(String)mqtt_user+"\",\"Temperature_Water\":\""+(String)sensors.getTempCByIndex(0)+"\",\"Lon\":\""+String(gps.location.lng(), 9)+"\",\"Lat\":\""+String(gps.location.lat(), 9)+"\"}";
+        String json = "{\"user\":\""+(String)mqtt_user+"\",";
+        json += "\"Temperature_Water\":\""+(String)sensors.getTempCByIndex(0)+"\",";
+        json += "\"Lon\":\""+String(gps.location.lng(), 9)+"\",";
+        json += "\"Lat\":\""+String(gps.location.lat(), 9)+"\",";
+        json += "\"FIXE\":\""+String(gnssFixMode.value())+"\"}";
         client.publish(mqtt_output, json.c_str() );
         client.disconnect();
 
@@ -186,47 +253,41 @@ void loop() {
         Serial.println(json);
     }
 
-    // NTRIP Data Handling
-    while(ntrip_c.available()) {
-        char ch = ntrip_c.read();        
-        MySerial.print(ch);
-    }
+    WiFiClient client;  // Declare the WiFiClient outside the switch
 
-WiFiClient client;  // Declare the WiFiClient outside the switch
-
-while (MySerial.available()) {
-    String s = MySerial.readStringUntil('\n');
-    switch (trans) {
-        case 0:  //serial out
-            Serial.println(s);
-            break;
-        case 1:  //udp out
-            udp.beginPacket(udpAddress, udpPort);
-            udp.print(s);
-            udp.endPacket();
-            break;
-        case 2:  //tcp client out
-            if (!client.connect(server, port)) {
-                Serial.println("connection failed");
-                return;
-            }
-            client.println(s);
-            while (client.connected()) {
-                while (client.available()) {
-                    char c = client.read();
-                    Serial.print(c);
+    while (MySerial.available()) {
+        String s = MySerial.readStringUntil('\n');
+        switch (trans) {
+            case 0:  //serial out
+                Serial.println(s);
+                break;
+            case 1:  //udp out
+                udp.beginPacket(udpAddress, udpPort);
+                udp.print(s);
+                udp.endPacket();
+                break;
+            case 2:  //tcp client out
+                if (!client.connect(server, port)) {
+                    Serial.println("connection failed");
+                    return;
                 }
-            }
-            client.stop();
-            break;
-        case 3:  //MySerial out
-            MySerial.println(s);
-            break;
-        default:  //mauvaise config
-            Serial.println("mauvais choix ou oubli de configuration");
-            break;
+                client.println(s);
+                while (client.connected()) {
+                    while (client.available()) {
+                        char c = client.read();
+                        Serial.print(c);
+                    }
+                }
+                client.stop();
+                break;
+            case 3:  //MySerial out
+                MySerial.println(s);
+                break;
+            default:  //mauvaise config
+                Serial.println("mauvais choix ou oubli de configuration");
+                break;
+        }
     }
-}
 
     delay(1000); // to reduce busy-looping
 }
