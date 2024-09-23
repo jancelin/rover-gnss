@@ -46,6 +46,7 @@ HardwareSerial Serialrx(1);
 
 // TinyGPSPlus instance to store GNSS NMEA data (datetim, position, etc.)
 TinyGPSPlus gps;
+TinyGPSCustom gnssFixMode(gps, "GNGGA", 6);
  
 void setup() {
   // pinMode(POWER_PIN, OUTPUT);
@@ -72,10 +73,15 @@ void loop() {
   Serial.print('.');
   Serial.print(gps.time.centisecond());
   Serial.print(" - LONG = ");
-  Serial.print(gps.location.lng());
+  Serial.print(gps.location.lng(),6);
   Serial.print(" - LAT = ");
-  Serial.print(gps.location.lat());
-  Serial.print(" - SATELITES = ");
+  Serial.print(gps.location.lat(),6);
+  Serial.print(" - COURSE = ");
+  Serial.print(gps.course.value());
+  Serial.print(" - SATELLITES = ");
   Serial.print(gps.satellites.value());
+  Serial.print(" - FIX MODE = ");
+  Serial.print(gnssFixMode.value());
+  
   Serial.println();  
 }
