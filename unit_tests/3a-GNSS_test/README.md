@@ -29,7 +29,7 @@ Le récepteur Drotek DP0601 a été configuré pour diffuser les trames NMEA `$G
 L'ESP32 utilisera son port `Serialrx` pour recevoir les trames NMEA du récepteur GNSS.
 
 ## Branchements
-
+![image](https://github.com/user-attachments/assets/eceb0724-3493-4ac6-a98e-df5c3475c9f9)
 Le montage conciste simplement à connecter le port série `Serial1` ( PIN TX 16 & RX 17) de l'ESP32 au port série `UART1` du recepteur Drotek.
 
 |ESP32 |DP0601|
@@ -37,4 +37,5 @@ Le montage conciste simplement à connecter le port série `Serial1` ( PIN TX 16
 |RX|UART1 B3 (TX)|
 |Vin (5V)|UART1 B1 (5V)|
 |GND|UART1 B6 (Gnd)|
+
 
