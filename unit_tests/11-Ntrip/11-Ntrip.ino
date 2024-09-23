@@ -13,6 +13,9 @@ HardwareSerial MySerial(1);
 #define PIN_RX 16
 #define PIN_TX 17
 
+// BLUETOOTH Name
+#define BT_NAME "YOUR BLUETOOTH NAME"
+
 const char* ssid     = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
 IPAddress server(192, 168, 1, 100);  // IP address of the server
@@ -20,7 +23,7 @@ int port = 80;
 
 char* host = NTRIP_SERVER_HOST;
 int httpPort = 2101; // port 2101 is default port of NTRIP caster
-char* mntpnt = "ntrip caster's mountpoint";
+char* mntpnt = NTRIP_CASTER_MOUNTPOINT;
 char* user   = NTRIP_USER;
 char* passwd = NTRIP_PASSWORD;
 bool sendGGA = true;
@@ -67,10 +70,10 @@ void setup() {
     // Initialiser le Bluetooth
     switch (trans) {
       case 5:
-        if (!SerialBT.begin("rover-gnss")) {
+        if (!SerialBT.begin(BT_NAME)) {
          Serial.println("An error occurred initializing Bluetooth");
         } else {
-          Serial.println("Bluetooth initialized with name 'rover-gnss'");
+          Serial.println("Bluetooth initialized with name " + (String)BT_NAME);
         }
         break;
     }
