@@ -115,9 +115,14 @@ void loop(void)
     Serial.print('.');
     Serial.print(gps.time.centisecond());
     Serial.print(" - LONG = ");
-    Serial.print(gps.location.lng());
+    Serial.print(gps.location.lng(),9);
     Serial.print(" - LAT = ");
-    Serial.print(gps.location.lat());
+    Serial.print(gps.location.lat(),9);
+    Serial.print(" - COURSE = ");
+    Serial.print(gps.course.value());
+    Serial.print(" - SATELLITES = ");
+    Serial.print(gps.satellites.value());
+    
     Serial.println();  
 
     sensors.requestTemperatures();   // request temperature conversion for all sensors
@@ -131,9 +136,8 @@ void loop(void)
       Serial.println("");
     }
     Serial.println("");
-
     //String json = "{\"user\":\""+(String)mqtt_user+"\",\"Humidity\":\""+(String)sensorBME280.readFloatHumidity()+"\",\"Pressure\":\""+(String)sensorBME280.readFloatPressure()+"\",\"Altitude\":\""+(String)sensorBME280.readFloatAltitudeMeters()+"\",\"AirTemperature\":\""+(String)sensorBME280.readTempC()+"\",\"Temperature_OvenInto_Water\":\""+(String)sensorDS18B20.getTempCByIndex(1)+"\",\"Temperature_OvenIn\":\""+(String)sensorDS18B20.getTempCByIndex(0)+"\"}";
-    String json = "{\"user\":\""+(String)mqtt_user+"\",\"Temperature_Water\":\""+(String)sensors.getTempCByIndex(0)+"\",\"Lon\":\""+(String)gps.location.lng()+"\",\"Lat\":\""+(String)gps.location.lat()+"\"}";
+    String json = "{\"user\":\""+(String)mqtt_user+"\",\"Temperature_Water\":\""+(String)sensors.getTempCByIndex(0)+"\",\"Lon\":\""+String(gps.location.lng(), 9)+"\",\"Lat\":\""+String(gps.location.lat(), 9)+"\"}";
     client.publish(mqtt_output, json.c_str() );
     client.disconnect();
 
