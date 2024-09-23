@@ -1,20 +1,28 @@
+/* ###################
+ * #    LIBRARIES    #
+ * ###################
+ */
 #include <WiFi.h>
 #include "NTRIPClient.h"
 #include <HardwareSerial.h>
 #include <BluetoothSerial.h>
+#include "Secret.h"
 
+// GNSS serial port
 HardwareSerial MySerial(1);
+#define PIN_RX 16
+#define PIN_TX 17
 
-const char* ssid     = "your_ssid";
-const char* password = "your_password";
+const char* ssid     = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 IPAddress server(192, 168, 1, 100);  // IP address of the server
 int port = 80;
 
-char* host = "ntrip caster host";
+char* host = NTRIP_SERVER_HOST;
 int httpPort = 2101; // port 2101 is default port of NTRIP caster
 char* mntpnt = "ntrip caster's mountpoint";
-char* user   = "ntrip caster's client user";
-char* passwd = "ntrip caster's client password";
+char* user   = NTRIP_USER;
+char* passwd = NTRIP_PASSWORD;
 bool sendGGA = true;
 NTRIPClient ntrip_c;
 
@@ -43,7 +51,7 @@ void setup() {
     // put your setup code here, to run once:
     Serial.begin(115200);
     delay(500);
-    MySerial.begin(115200, SERIAL_8N1, 16, 17); // serial port to send RTCM to F9P
+    MySerial.begin(115200, SERIAL_8N1, PIN_RX, PIN_TX); // serial port to send RTCM to F9P
     delay(100);
     Serial.print("Connecting to ");
     Serial.println(ssid);

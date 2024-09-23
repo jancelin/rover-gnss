@@ -9,9 +9,9 @@
 // Data wire is plugged into port 14 on the ESP32 (GPIO14)
 #define ONE_WIRE_BUS 0
 
-#define PIN_TX 26
-#define PIN_RX 27 
-#define POWER_PIN 25
+#define PIN_TX 16
+#define PIN_RX 17 
+// #define POWER_PIN 25
 // GNSS serial port
 HardwareSerial Serialrx(1);
 // TinyGPSPlus instance to store GNSS NMEA data (datetim, position, etc.)
@@ -37,8 +37,8 @@ void setup(void)
   Serialrx.begin(115200, SERIAL_8N1, PIN_RX, PIN_TX);
   delay(100);
 
-  pinMode(POWER_PIN, OUTPUT);
-  digitalWrite(POWER_PIN, HIGH);
+  // pinMode(POWER_PIN, OUTPUT);
+  // digitalWrite(POWER_PIN, HIGH);
 
   // Start up the DS18b20 communication protocole
   sensors.begin();

@@ -7,13 +7,14 @@
 #include <TinyGPSPlus.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include "Secret.h"
 
 // Data wire is plugged into port 14 on the ESP32 (GPIO14)
 #define ONE_WIRE_BUS 0
 
-#define PIN_TX 26
-#define PIN_RX 27 
-#define POWER_PIN 25
+#define PIN_RX 16
+#define PIN_TX 17 
+// #define POWER_PIN 25
 // GNSS serial port
 HardwareSerial Serialrx(1);
 // TinyGPSPlus instance to store GNSS NMEA data (datetim, position, etc.)
@@ -29,18 +30,19 @@ DeviceAddress Thermometer;
 int deviceCount = 0;
 float temp =0;  // variable pour l'affichage de la température
 
+// WIFI Parameters
+const char* ssid     = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 // MQTT Parameters
-const char* ssid     = "ici";
-const char* password = "12345678";
-const char* mqtt_server = "mavi-mqtt.centipede.fr";
-const int mqtt_port = 8090;
-const char* mqtt_output = "lilygo/data";
-const char* mqtt_input = "lilygo/input";
-const char* mqtt_log = "lilygo/log";
-const char* mqtt_user = "LilyGo";
-const char* mqtt_password = "password";
-const char mqtt_UUID[] = "LilyGo-RT";
+const char* mqtt_server = MQTT_SERVER;
+const int mqtt_port = MQTT_PORT;
+const char* mqtt_output = MQTT_OUTPUT;
+const char* mqtt_input = MQTT_INPUT;
+const char* mqtt_log = MQTT_LOG;
+const char* mqtt_user = MQTT_USER;
+const char* mqtt_password = MQTT_PASSWORD;
+const char mqtt_UUID[] = MQTT_UUID;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -57,8 +59,8 @@ void setup(void)
   Serialrx.begin(115200, SERIAL_8N1, PIN_RX, PIN_TX);
   delay(100);
 
-  pinMode(POWER_PIN, OUTPUT);
-  digitalWrite(POWER_PIN, HIGH);
+  // pinMode(POWER_PIN, OUTPUT);
+  // digitalWrite(POWER_PIN, HIGH);
 
   // Start up the DS18b20 communication protocole
   sensors.begin();

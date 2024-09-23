@@ -5,11 +5,12 @@
 #include <DallasTemperature.h>
 #include <TinyGPSPlus.h>
 #include <PubSubClient.h>
+#include "Secret.h"
 
 HardwareSerial MySerial(1);
-#define PIN_TX 26
-#define PIN_RX 27 
-#define POWER_PIN 25
+#define PIN_RX 16
+#define PIN_TX 17 
+// #define POWER_PIN 25
 
 // Data wire is plugged into port 14 on the ESP32 (GPIO14)
 #define ONE_WIRE_BUS 0
@@ -24,17 +25,19 @@ DeviceAddress Thermometer;
 int deviceCount = 0;
 float temp =0;  // variable for displaying the temperature
 
+// WIFI Parameters
+const char* ssid     = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
+
 // MQTT Parameters
-const char* ssid     = "buoy";
-const char* password = "12345678";
-const char* mqtt_server = "192.168.36.197";
-const int mqtt_port = 1883;
-const char* mqtt_output = "lilygo/data";
-const char* mqtt_input = "lilygo/input";
-const char* mqtt_log = "lilygo/log";
-const char* mqtt_user = "LilyGo";
-const char* mqtt_password = "password";
-const char mqtt_UUID[] = "LilyGo-RT";
+const char* mqtt_server = MQTT_SERVER;
+const int mqtt_port = MQTT_PORT;
+const char* mqtt_output = MQTT_OUTPUT;
+const char* mqtt_input = MQTT_INPUT;
+const char* mqtt_log = MQTT_LOG;
+const char* mqtt_user = MQTT_USER;
+const char* mqtt_password = MQTT_PASSWORD;
+const char mqtt_UUID[] = MQTT_UUID;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -49,11 +52,12 @@ TinyGPSPlus gps;
 IPAddress server(192, 168, 1, 100);  // IP address of the server
 int port = 80;            
 
-char* host = "caster.centipede.fr";
-int httpPort = 2101; //port 2101 is default port of NTRIP caster
-char* mntpnt = "LIENSS";
-char* user   = "rover-gnss-tester";
-char* passwd = "";
+char* host = NTRIP_SERVER_HOST;
+int httpPort = 2101; // port 2101 is default port of NTRIP caster
+char* mntpnt = "ntrip caster's mountpoint";
+char* user   = NTRIP_USER;
+char* passwd = NTRIP_PASSWORD;
+bool sendGGA = true;
 NTRIPClient ntrip_c;
 
 const char* udpAddress = "192.168.1.255";
@@ -65,8 +69,8 @@ WiFiUDP udp;
 
 void setup() {
     // POWER_PIN : This pin controls the power supply of the MICRO PCI card
-    pinMode(POWER_PIN, OUTPUT);
-    digitalWrite(POWER_PIN, HIGH);
+    // pinMode(POWER_PIN, OUTPUT);
+    // digitalWrite(POWER_PIN, HIGH);
 
     // Start serial ports
     Serial.begin(115200);

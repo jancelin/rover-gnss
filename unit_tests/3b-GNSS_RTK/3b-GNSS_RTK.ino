@@ -1,28 +1,31 @@
 #include <WiFi.h>
 #include "NTRIPClient.h"
 #include <HardwareSerial.h>
+#include "Secret.h"
 
 HardwareSerial MySerial(1);
-#define PIN_TX 26
-#define PIN_RX 27 
-#define POWER_PIN 25
+#define PIN_RX 16
+#define PIN_TX 17 
+// #define POWER_PIN 25
 
-const char* ssid     = "ici";
-const char* password = "12345678";
+const char* ssid     = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 IPAddress server(192, 168, 1, 100);  // IP address of the server
 int port = 80;            
 
-char* host = "castera.ntrip.eu.org";
+char* host = NTRIP_SERVER_HOST;
 int httpPort = 2101; // port 2101 is default port of NTRIP caster
-char* mntpnt = "V";
-char* user   = "rover-gnss-tester";
-char* passwd = "";
+char* mntpnt = "ntrip caster's mountpoint";
+char* user   = NTRIP_USER;
+char* passwd = NTRIP_PASSWORD;
+bool sendGGA = true;
+
 NTRIPClient ntrip_c;
 
 const char* udpAddress = "192.168.1.255";
 const int udpPort = 9999;
 
-int trans = 3;  // 0 = serial, 1 = udp, 2 = tcp client, 3 = MySerial, 4 = MySerial. Choose which out you want to use. for RS232 set 0 and connect tx F9P directly to RS232 module
+int trans = 3;  // 0 = serial, 1 = udp, 2 = tcp client, 3 = MySerial. Choose which out you want to use. for RS232 set 0 and connect tx F9P directly to RS232 module
 
 WiFiUDP udp;
 
@@ -37,8 +40,8 @@ const long interval = 10000;  // Interval of 10 seconds
 
 void setup() {
     // POWER_PIN : This pin controls the power supply of the MICRO PCI card
-    pinMode(POWER_PIN, OUTPUT);
-    digitalWrite(POWER_PIN, HIGH);
+    // pinMode(POWER_PIN, OUTPUT);
+    // digitalWrite(POWER_PIN, HIGH);
 
     Serial.begin(115200);
     delay(500);
@@ -148,11 +151,8 @@ void loop() {
             case 3:  // MySerial out
                 MySerial.println(s);
                 break;
-            case 4:  // MySerial out
-                MySerial.println(s);
-                break;
             default:  // mauvaise config
-                Serial.println("mauvais choix ou oubli de configuration");
+                Serial.println("Bad value for 'trans' parameter");
                 break;
         }
     }

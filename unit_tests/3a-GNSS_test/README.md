@@ -26,11 +26,11 @@ Ce programme est inspiré des exemples présents sur le site [Arduiniana](http:/
 ## Ports
 Pour ce montage, le port de communication `Serial` est utilisé pour le debug via USB (moniteur série de l'IDE Arduino) à 115200 baud. <br>
 Le récepteur Drotek DP0601 a été configuré pour diffuser les trames NMEA `$GPGGA` et `$GPRMC` sur son port `UART1`.<br>
-Le lilyGO utilisera son port `Serialrx` pour recevoir les trames NMEA du récepteur GNSS.
+L'ESP32 utilisera son port `Serialrx` pour recevoir les trames NMEA du récepteur GNSS.
 
 ## Branchements
 
-Le montage conciste simplement à connecter le port série `Serial5` du Teensy au port série `UART1` du recepteur Drotek.
+Le montage conciste simplement à connecter le port série `Serial1` ( PIN TX 16 & RX 17) de l'ESP32 au port série `UART1` du recepteur Drotek.
 
 |LiLyGo|DP0601|
 |------|------|
