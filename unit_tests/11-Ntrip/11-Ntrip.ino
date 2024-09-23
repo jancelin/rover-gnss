@@ -86,10 +86,11 @@ void setup() {
             ntrip_c.readLine(buffer, sizeof(buffer));
             //Serial.print(buffer);
         }
+        Serial.print("Requesting SourceTable is OK\n");
+
     } else {
         Serial.println("SourceTable request error");
     }
-    Serial.print("Requesting SourceTable is OK\n");
     ntrip_c.stop(); // Need to call "stop" function for next request.
 
     Serial.println("Requesting MountPoint's Raw data");

@@ -15,7 +15,7 @@ int port = 80;
 
 char* host = NTRIP_SERVER_HOST;
 int httpPort = 2101; // port 2101 is default port of NTRIP caster
-char* mntpnt = "ntrip caster's mountpoint";
+char* mntpnt = NTRIP_CASTER_MOUNTPOINT;
 char* user   = NTRIP_USER;
 char* passwd = NTRIP_PASSWORD;
 bool sendGGA = true;
@@ -47,8 +47,6 @@ void setup() {
     delay(500);
     MySerial.begin(115200, SERIAL_8N1, PIN_RX, PIN_TX); // serial port to send RTCM to F9P
     delay(100);
-    MySerial.begin(115200, SERIAL_8N1, PIN_RX, PIN_TX);
-    delay(100);
     Serial.print("Connecting to ");
     Serial.println(ssid);
     WiFi.begin(ssid, password);
@@ -66,12 +64,13 @@ void setup() {
         delay(5);
         while (ntrip_c.available()) {
             ntrip_c.readLine(buffer, sizeof(buffer));
-            Serial.print(buffer); 
+            //Serial.print(buffer); 
         }
+        Serial.print("Requesting SourceTable is OK\n");
+
     } else {
         Serial.println("SourceTable request error");
     }
-    Serial.print("Requesting SourceTable is OK\n");
     ntrip_c.stop(); // Need to call "stop" function for next request.
 
     Serial.println("Requesting MountPoint's Raw data");
@@ -89,7 +88,7 @@ void loop() {
         previousMillis = currentMillis;
 
         // Assume ggaMessage is updated regularly with the correct GGA string
-        if (ggaMessage != "") {
+        if (ggaMessage != "" && sendGGA ) {
             ntrip_c.sendGGA(ggaMessage.c_str(), host, httpPort, user, passwd, mntpnt);
         }
     }

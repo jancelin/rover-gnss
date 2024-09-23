@@ -44,7 +44,7 @@ PubSubClient client(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
-int timeInterval = 1000;
+int timeInterval = 3000;
 
 // TinyGPSPlus instance to store GNSS NMEA data (datetim, position, etc.)
 TinyGPSPlus gps;
@@ -54,7 +54,7 @@ int port = 80;
 
 char* host = NTRIP_SERVER_HOST;
 int httpPort = 2101; // port 2101 is default port of NTRIP caster
-char* mntpnt = "ntrip caster's mountpoint";
+char* mntpnt = NTRIP_CASTER_MOUNTPOINT;
 char* user   = NTRIP_USER;
 char* passwd = NTRIP_PASSWORD;
 bool sendGGA = true;
@@ -122,10 +122,11 @@ void setup() {
             ntrip_c.readLine(buffer,sizeof(buffer));
             //Serial.print(buffer); //print sourcetable
         }
+        Serial.print("Requesting SourceTable is OK\n");
+
     } else {
         Serial.println("SourceTable request error");
     }
-    Serial.print("Requesting SourceTable is OK\n");
     ntrip_c.stop(); // Need to call "stop" function for next request.
     
     Serial.println("Requesting MountPoint's Raw data");
@@ -219,9 +220,6 @@ while (MySerial.available()) {
             client.stop();
             break;
         case 3:  //MySerial out
-            MySerial.println(s);
-            break;
-        case 4:  //MySerial out
             MySerial.println(s);
             break;
         default:  //mauvaise config
