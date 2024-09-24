@@ -1,17 +1,25 @@
+/* ###################
+ * #    LIBRARIES    #
+ * ###################
+ */
 #include <WiFi.h>
 #include "NTRIPClient.h"
 #include <HardwareSerial.h>
+#include <BluetoothSerial.h>
 #include "Secret.h"
 
+// GNSS serial port
 HardwareSerial MySerial(1);
 #define PIN_RX 16
-#define PIN_TX 17 
-// #define POWER_PIN 25
+#define PIN_TX 17
+
+// BLUETOOTH Name
+#define BT_NAME "sarace2"
 
 const char* ssid     = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
 IPAddress server(192, 168, 1, 100);  // IP address of the server
-int port = 80;            
+int port = 80;
 
 char* host = NTRIP_SERVER_HOST;
 int httpPort = 2101; // port 2101 is default port of NTRIP caster
@@ -19,30 +27,31 @@ char* mntpnt = NTRIP_CASTER_MOUNTPOINT;
 char* user   = NTRIP_USER;
 char* passwd = NTRIP_PASSWORD;
 bool sendGGA = true;
-
 NTRIPClient ntrip_c;
 
-const char* udpAddress = "192.168.1.255";
+const char* udpAddress = "192.168.0.13";
 const int udpPort = 9999;
 
-int trans = 3;  // 0 = serial, 1 = udp, 2 = tcp client, 3 = MySerial. Choose which out you want to use. for RS232 set 0 and connect tx F9P directly to RS232 module
+int trans = 4; 
+// 0 = serial, 1 = udp, 2 = tcp client, 3 = MySerial, 4 = Bluetooth Choose which output you want to use. for RS232 set 0 and connect tx F9P directly to RS232 module
 
 WiFiUDP udp;
 
-// 4 send GGA
+// send GGA 
 NTRIPClient ntripClient;
 String nmeaMessage = "";
 String ggaMessage = "";
 
-unsigned long previousMillis = 0;
-unsigned long currentMillis = 0; // Déclaration globale
-const long interval = 10000;  // Interval of 10 seconds
+unsigned long previousMillis = 0; // timer
+unsigned long currentMillis = 0;  // timer
+
+const long interval = 10000;     // Duration between 2 GGA Sending
+const long readDuration = 1000;  // Duration of NMEA reading in milliseconds
+
+BluetoothSerial SerialBT;
 
 void setup() {
-    // POWER_PIN : This pin controls the power supply of the MICRO PCI card
-    // pinMode(POWER_PIN, OUTPUT);
-    // digitalWrite(POWER_PIN, HIGH);
-
+    // put your setup code here, to run once:
     Serial.begin(115200);
     delay(500);
     MySerial.begin(115200, SERIAL_8N1, PIN_RX, PIN_TX); // serial port to send RTCM to F9P
@@ -58,13 +67,24 @@ void setup() {
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
 
+    // Initialiser le Bluetooth
+    switch (trans) {
+      case 4:
+        if (!SerialBT.begin(BT_NAME)) {
+         Serial.println("An error occurred initializing Bluetooth");
+        } else {
+          Serial.println("Bluetooth initialized with name " + (String)BT_NAME);
+        }
+        break;
+    }
+
     Serial.println("Requesting SourceTable.");
     if (ntrip_c.reqSrcTbl(host, httpPort)) {
         char buffer[512];
         delay(5);
         while (ntrip_c.available()) {
             ntrip_c.readLine(buffer, sizeof(buffer));
-            //Serial.print(buffer); 
+            //Serial.print(buffer);
         }
         Serial.print("Requesting SourceTable is OK\n");
 
@@ -82,40 +102,51 @@ void setup() {
 }
 
 void loop() {
-    WiFiClient client;
-    currentMillis = millis();
-    if (currentMillis - previousMillis >= interval) {
-        previousMillis = currentMillis;
 
-        // Assume ggaMessage is updated regularly with the correct GGA string
-        if (ggaMessage != "" && sendGGA ) {
-            ntrip_c.sendGGA(ggaMessage.c_str(), host, httpPort, user, passwd, mntpnt);
-        }
-    }
+  WiFiClient client;
+  if (sendGGA) {
+      currentMillis = millis();
+      if (currentMillis - previousMillis >= interval) {
+          previousMillis = currentMillis;
 
-    // Read NMEA messages
-    while (MySerial.available()) {
-        char c = MySerial.read();
-        if (c == '\n' || c == '\r') {
-            if (nmeaMessage.startsWith("$GNGGA")) {
-                ggaMessage = nmeaMessage;
-                // Serial.println("Extracted GGA: " + ggaMessage);  // Log extracted GGA message
-            }
-            nmeaMessage = "";
-        } else {
-            nmeaMessage += c;
-        }
-    }
+          unsigned long readStartMillis = millis();
+          bool ggaFound = false;
+          while (millis() - readStartMillis < readDuration && !ggaFound) {
+              while (MySerial.available()) {
+                  char c = MySerial.read();
+                  if (c == '\n' || c == '\r') {
+                      if (nmeaMessage.startsWith("$GNGGA") || nmeaMessage.startsWith("$GPGGA")) {
+                          // Validation du format GGA
+                          int numFields = 0;
+                          for (char ch : nmeaMessage) {
+                              if (ch == ',') numFields++;
+                          }
+                          if (numFields == 14) { // 14 virgules attendues dans un message GGA complet
+                              ntrip_c.setLastGGA(nmeaMessage);                  // Stocker le dernier message GGA reçu
+                              Serial.println("Extracted GGA: " + nmeaMessage);  // Log du message GGA extrait
+                              ggaFound = true;                                  // Mettre à jour le drapeau pour arrêter la lecture
+                              break;                                            // Sortir de la boucle intérieure
+                          }
+                      }
+                      nmeaMessage = "";
+                  } else {
+                      nmeaMessage += c;
+                  }
+              }
+          }
 
-    // Periodically send GGA messages
-    unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= interval) {
-        previousMillis = currentMillis;
-        if (ggaMessage.length() > 0) {
-            ntripClient.sendGGA(ggaMessage.c_str(), host, httpPort, user, passwd, mntpnt);
-            Serial.println("Sent GGA: " + ggaMessage);  // Log sent GGA message
-        }
+      // Send the last GGA message stored
+      String lastGGA = ntrip_c.getLastGGA();
+      if (lastGGA != "") {
+          ntrip_c.sendGGA(lastGGA.c_str(), host, httpPort, user, passwd, mntpnt);
+          Serial.println("Sent GGA: " + lastGGA);  // Log sent GGA message
+          lastGGA = "";
+          //Serial.println("Cleaned GGA");
+      } else {
+          Serial.println("No GGA message to send.");
+      }
     }
+  }
 
     while (ntrip_c.available()) {
         char ch = ntrip_c.read();
@@ -150,10 +181,12 @@ void loop() {
             case 3:  // MySerial out
                 MySerial.println(s);
                 break;
+            case 4: //BT
+                SerialBT.println(s);
+                break;
             default:  // mauvaise config
-                Serial.println("Bad value for 'trans' parameter");
+                Serial.println("mauvais choix ou oubli de configuration");
                 break;
         }
     }
 }
-
