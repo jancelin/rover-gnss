@@ -60,7 +60,7 @@ void setup() {
 
 void loop() {
   // While GNSS_SERIAL buffer is not empty
-  while (Serialrx.available())
+  while (Serialrx.available()) 
     // Read buffer
     gps.encode(Serialrx.read());
 
@@ -73,9 +73,9 @@ void loop() {
   Serial.print('.');
   Serial.print(gps.time.centisecond());
   Serial.print(" - LONG = ");
-  Serial.print(gps.location.lng(),6);
+  Serial.print(gps.location.lng(),8); //Degree precision versus length (https://en.wikipedia.org/wiki/Decimal_degrees)
   Serial.print(" - LAT = ");
-  Serial.print(gps.location.lat(),6);
+  Serial.print(gps.location.lat(),8);
   Serial.print(" - COURSE = ");
   Serial.print(gps.course.value());
   Serial.print(" - SATELLITES = ");
