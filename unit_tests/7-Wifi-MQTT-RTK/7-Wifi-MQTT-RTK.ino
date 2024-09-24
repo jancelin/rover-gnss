@@ -109,17 +109,6 @@ void setup() {
     client.setServer(mqtt_server, mqtt_port);
     client.setCallback(callback);
 
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-
     Serial.println("Requesting SourceTable.");
     if(ntrip_c.reqSrcTbl(host,httpPort)){
         char buffer[512];
@@ -155,6 +144,7 @@ void loop() {
             while (millis() - readStartMillis < readDuration && !ggaFound) {
                 while (MySerial.available()) {
                     char c = MySerial.read();
+                    gps.encode(c);
                     if (c == '\n' || c == '\r') {
                         if (nmeaMessage.startsWith("$GNGGA") || nmeaMessage.startsWith("$GPGGA")) {
                             // Validation du format GGA
@@ -204,10 +194,10 @@ void loop() {
         }
         client.loop();
 
-        // While GNSS_SERIAL buffer is not empty
-        while (MySerial.available())
-            // Read buffer
-            gps.encode(MySerial.read());
+        // // While GNSS_SERIAL buffer is not empty
+        // while (MySerial.available())
+        //     // Read buffer
+        //     gps.encode(MySerial.read());
 
         // Dump GNSS time (UTC)
         Serial.print(gps.time.hour());
