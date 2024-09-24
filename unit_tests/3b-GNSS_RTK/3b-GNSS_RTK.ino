@@ -14,7 +14,7 @@ HardwareSerial MySerial(1);
 #define PIN_TX 17
 
 // BLUETOOTH Name
-#define BT_NAME "sarace2"
+#define BT_NAME "ESP32_BT_GNSS_RTK"
 
 const char* ssid     = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
@@ -183,6 +183,7 @@ void loop() {
                 break;
             case 4: //BT
                 SerialBT.println(s);
+                // Serial.println(s); // DEbug mode, permet de voir toutes les trames envoyées par le F9P
                 break;
             default:  // mauvaise config
                 Serial.println("mauvais choix ou oubli de configuration");
