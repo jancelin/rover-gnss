@@ -9,13 +9,14 @@
 // Data wire is plugged into port 14 on the ESP32 (GPIO14)
 #define ONE_WIRE_BUS 0
 
-#define PIN_TX 16
-#define PIN_RX 17 
+#define PIN_RX 16
+#define PIN_TX 17 
 // #define POWER_PIN 25
 // GNSS serial port
 HardwareSerial Serialrx(1);
 // TinyGPSPlus instance to store GNSS NMEA data (datetim, position, etc.)
 TinyGPSPlus gps;
+TinyGPSCustom gnssFixMode(gps, "GNGGA", 6);
 
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWire(ONE_WIRE_BUS);
@@ -80,9 +81,15 @@ void loop(void)
   Serial.print('.');
   Serial.print(gps.time.centisecond());
   Serial.print(" - LONG = ");
-  Serial.print(gps.location.lng());
+  Serial.print(gps.location.lng(),8);
   Serial.print(" - LAT = ");
-  Serial.print(gps.location.lat());
+  Serial.print(gps.location.lat(),8);
+  Serial.print(" - COURSE = ");
+  Serial.print(gps.course.value());
+  Serial.print(" - SATELLITES = ");
+  Serial.print(gps.satellites.value());
+  Serial.print(" - FIX MODE = ");
+  Serial.print(gnssFixMode.value());
   Serial.println();  
 
   sensors.requestTemperatures();   // request temperature conversion for all sensors
