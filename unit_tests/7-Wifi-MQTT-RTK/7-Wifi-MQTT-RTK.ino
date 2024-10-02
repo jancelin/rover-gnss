@@ -10,6 +10,8 @@
 HardwareSerial MySerial(1);
 #define PIN_RX 16
 #define PIN_TX 17 
+#define MYSERIAL_BAUD_RATE 460800 // 115200 Works with F9P config on 2Hz ( not in 5Hz ! )
+
 // #define POWER_PIN 25
 
 // Data wire is plugged into port 14 on the ESP32 (GPIO14)
@@ -81,7 +83,7 @@ void setup() {
     // Start serial ports
     Serial.begin(115200);
     delay(100);
-    MySerial.begin(115200, SERIAL_8N1, PIN_RX, PIN_TX);
+    MySerial.begin(MYSERIAL_BAUD_RATE, SERIAL_8N1, PIN_RX, PIN_TX); // 115200 Works with 
     delay(100);
 
     // Start up the DS18b20 communication protocol
