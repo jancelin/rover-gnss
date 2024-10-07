@@ -12,6 +12,7 @@
 HardwareSerial MySerial(1);
 #define PIN_RX 16
 #define PIN_TX 17
+#define MYSERIAL_BAUD_RATE 460800 // 115200 Works with F9P config on 2Hz ( not in 5Hz ! )
 
 // BLUETOOTH Name
 #define BT_NAME "ESP32_BT_GNSS_RTK"
@@ -54,7 +55,7 @@ void setup() {
     // put your setup code here, to run once:
     Serial.begin(115200);
     delay(500);
-    MySerial.begin(115200, SERIAL_8N1, PIN_RX, PIN_TX); // serial port to send RTCM to F9P
+    MySerial.begin(MYSERIAL_BAUD_RATE, SERIAL_8N1, PIN_RX, PIN_TX); // serial port to send RTCM to F9P
     delay(100);
     Serial.print("Connecting to ");
     Serial.println(ssid);
