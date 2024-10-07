@@ -137,7 +137,12 @@ void loop(void)
     }
     Serial.println("");
     //String json = "{\"user\":\""+(String)mqtt_user+"\",\"Humidity\":\""+(String)sensorBME280.readFloatHumidity()+"\",\"Pressure\":\""+(String)sensorBME280.readFloatPressure()+"\",\"Altitude\":\""+(String)sensorBME280.readFloatAltitudeMeters()+"\",\"AirTemperature\":\""+(String)sensorBME280.readTempC()+"\",\"Temperature_OvenInto_Water\":\""+(String)sensorDS18B20.getTempCByIndex(1)+"\",\"Temperature_OvenIn\":\""+(String)sensorDS18B20.getTempCByIndex(0)+"\"}";
-    String json = "{\"user\":\""+(String)mqtt_user+"\",\"Temperature_Water\":\""+(String)sensors.getTempCByIndex(0)+"\",\"Lon\":\""+String(gps.location.lng(), 9)+"\",\"Lat\":\""+String(gps.location.lat(), 9)+"\"}";
+    
+    String json = "{\"user\":\""+(String)mqtt_user+"\",";
+        json += "\"Temperature_Water\":\""+(String)sensors.getTempCByIndex(0)+"\",";
+        json += "\"Lon\":\""+String(gps.location.lng(), 9)+"\",";
+        json += "\"Lat\":\""+String(gps.location.lat(), 9)+"\"}";
+        
     client.publish(mqtt_output, json.c_str() );
     client.disconnect();
 
