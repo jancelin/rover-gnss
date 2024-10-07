@@ -7,7 +7,7 @@
 /* CONFIG for UART1 */
 #define PIN_RX 16
 #define PIN_TX 17 
-#define BT_NAME "Bluetooth_GNSS"
+#define BT_NAME "rover-BT-RTK"
 HardwareSerial *RTCM{&Serial1};
 HardwareSerial *Receiver{&Serial2};
 
@@ -130,7 +130,7 @@ void setup()
     Receiver->onReceiveError(receiveErrorFnc);
     // Receiver->setRxTimeout(1);
 
-    Receiver->begin(115200, SERIAL_8N1, PIN_RX, PIN_TX /*, false, 20000UL, static_cast<uint8_t>(SERIAL_SIZE_RX)*/);
+    Receiver->begin(460800, SERIAL_8N1, PIN_RX, PIN_TX /*, false, 20000UL, static_cast<uint8_t>(SERIAL_SIZE_RX)*/);
     // Receiver->begin(BAUND_RECEIVER, SERIAL_8N1, RXD2, TXD2 /*, false, 20000UL, static_cast<uint8_t>(SERIAL_SIZE_RX)*/);
 
     // delay(500);
@@ -149,9 +149,6 @@ void setup()
     RTCM->setRxBufferSize(RX_BUFFER_SIZE);
     RTCM->onReceive(onRtcmReceiveCb, false);
     RTCM->onReceiveError(receiveErrorFnc);
-
-    // RTCM->begin(115200, SERIAL_8N1, 16, 17);
-    // RTCM->begin(115200, SERIAL_8N1, RXD1, TXD1);
 }
 
 void loop()
