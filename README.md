@@ -1,4 +1,3 @@
-![image](https://github.com/user-attachments/assets/8bcd66e0-0976-4b93-9b6c-d4fa2cef9aab)---
 layout: default
 title: 404
 nav_exclude: true
