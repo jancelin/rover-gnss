@@ -31,7 +31,7 @@ L'ESP32 utilisera son port `Serialrx` pour recevoir les trames NMEA du récepteu
 
 ## Branchements avec F9P
 ![image](https://github.com/user-attachments/assets/eceb0724-3493-4ac6-a98e-df5c3475c9f9)
-Le montage conciste simplement à connecter le port série `Serial1` ( PIN TX 16 & RX 17) de l'ESP32 au port série `UART1` du recepteur Drotek.
+Le montage consiste simplement à connecter le port série `Serial1` ( PIN TX 16 & RX 17) de l'ESP32 au port série `UART1` du recepteur Drotek.
 
 |ESP32 |DP0601|
 |------|------|
@@ -41,7 +41,7 @@ Le montage conciste simplement à connecter le port série `Serial1` ( PIN TX 16
 
 ## Branchements avec UM980
 ![sch_UM980-ESP32](https://github.com/user-attachments/assets/54ff61c4-19b8-4220-a641-435edf369864)
-Le montage conciste simplement à connecter le port série `Serial1` ( PIN TX 16 & RX 17) de l'ESP32 au port série `UART1` du recepteur UM980.
+Le montage consiste simplement à connecter le port série `Serial1` ( PIN TX 16 & RX 17) de l'ESP32 au port série `UART1` du recepteur UM980.
 
 |ESP32 |UM980|
 |------|------|
