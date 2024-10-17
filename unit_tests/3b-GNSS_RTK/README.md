@@ -18,7 +18,7 @@ Le montage consiste simplement à connecter le port série `Serial1` ( PIN TX 16
 |ESP32 |UM980|
 |------|------|
 |RX( pin 16) | UART1 2 (TX)|
-|TX( pin 17) | UART1 1 (TX)|
+|TX( pin 17) | UART1 1 (RX)|
 |Vin (5V)    | UART1 12 (5V)|
 |GND         | UART1 11 (Gnd)|
 
