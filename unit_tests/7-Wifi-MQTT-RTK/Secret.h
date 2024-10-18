@@ -14,3 +14,9 @@
 #define NTRIP_USER "YOUR NTRIP User"
 #define NTRIP_PASSWORD "YOUR NTRIP Password if neede"
 #define NTRIP_CASTER_MOUNTPOINT "YOUR NTRIP MOUNT POINT"
+
+
+#define RS2323_SERIAL  0
+#define UDP_SERVER  1
+#define TCP_MQTT  2
+#define RS2323_MYSERIAL  3
