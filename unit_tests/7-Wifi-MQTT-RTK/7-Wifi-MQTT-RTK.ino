@@ -42,7 +42,7 @@ const char* mqtt_password = MQTT_PASSWORD;
 const char mqtt_UUID[] = MQTT_UUID;
 
 WiFiClient espClient;
-PubSubClient client(espClient);
+PubSubClient client_mqtt(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
@@ -71,7 +71,7 @@ String ggaMessage = "";
 const char* udpAddress = "192.168.1.255";
 const int udpPort = 9999;
 
-int trans = 3;  //0 = serial, 1 = udp, 2 = tcp client, 3 = MySerial - Choose which out you want use. for rs232 set 0 and connect tx f9p directly to rs232 module
+int trans = 3;  //0 = serial, 1 = udp, 2 = tcp client_mqtt, 3 = MySerial - Choose which out you want use. for rs232 set 0 and connect tx f9p directly to rs232 module
 
 WiFiUDP udp;
 
@@ -108,8 +108,8 @@ void setup() {
 
     // Setup Wifi & MQTT
     setup_wifi();
-    client.setServer(mqtt_server, mqtt_port);
-    client.setCallback(callback);
+    client_mqtt.setServer(mqtt_server, mqtt_port);
+    client_mqtt.setCallback(callback);
 
     Serial.println("Requesting SourceTable.");
     if(ntrip_c.reqSrcTbl(host,httpPort)){
@@ -190,11 +190,11 @@ void loop() {
     long now = millis();
     if (now - lastMsg > timeInterval ) {
         lastMsg = now;
-        if (!client.connected()) {
+        if (!client_mqtt.connected()) {
             Serial.println("Reconnect to Mqtt");
             reconnect();
         }
-        client.loop();
+        client_mqtt.loop();
 
         // // While GNSS_SERIAL buffer is not empty
         // while (MySerial.available())
@@ -238,14 +238,14 @@ void loop() {
         json += "\"Lon\":\""+String(gps.location.lng(), 9)+"\",";
         json += "\"Lat\":\""+String(gps.location.lat(), 9)+"\",";
         json += "\"FIXE\":\""+String(gnssFixMode.value())+"\"}";
-        client.publish(mqtt_output, json.c_str() );
-        client.disconnect();
+        client_mqtt.publish(mqtt_output, json.c_str() );
+        client_mqtt.disconnect();
 
         Serial.println("Mqtt sent to : " + (String)mqtt_output );
         Serial.println(json);
     }
 
-    WiFiClient client;  // Declare the WiFiClient outside the switch
+    WiFiClient client_wifi;  // Declare the WiFiClient outside the switch
 
     while (MySerial.available()) {
         String s = MySerial.readStringUntil('\n');
@@ -258,19 +258,19 @@ void loop() {
                 udp.print(s);
                 udp.endPacket();
                 break;
-            case 2:  //tcp client out
-                if (!client.connect(server, port)) {
+            case 2:  //tcp client_wifi out
+                if (!client_wifi.connect(server, port)) {
                     Serial.println("connection failed");
                     return;
                 }
-                client.println(s);
-                while (client.connected()) {
-                    while (client.available()) {
-                        char c = client.read();
+                client_wifi.println(s);
+                while (client_wifi.connected()) {
+                    while (client_wifi.available()) {
+                        char c = client_wifi.read();
                         Serial.print(c);
                     }
                 }
-                client.stop();
+                client_wifi.stop();
                 break;
             case 3:  //MySerial out
                 MySerial.println(s);
@@ -314,17 +314,17 @@ void setup_wifi() {
 
 void reconnect() {
     // Loop until we're reconnected
-    while (!client.connected()) {
+    while (!client_mqtt.connected()) {
         delay(100);
         Serial.print("Attempting MQTT connection...");
         // Attempt to connect
-        if (client.connect(mqtt_UUID , mqtt_user, mqtt_password )) {
+        if (client_mqtt.connect(mqtt_UUID , mqtt_user, mqtt_password )) {
             Serial.println("connected");
             // Subscribe
-            client.subscribe(mqtt_input);
+            client_mqtt.subscribe(mqtt_input);
         } else {
             Serial.print("failed, rc=");
-            Serial.print(client.state());
+            Serial.print(client_mqtt.state());
             Serial.println(" try again in 5 seconds");
             // Wait 5 seconds before retrying
             delay(3000);
