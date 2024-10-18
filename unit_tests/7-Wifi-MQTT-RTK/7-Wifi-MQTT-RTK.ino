@@ -71,7 +71,12 @@ String ggaMessage = "";
 const char* udpAddress = "192.168.1.255";
 const int udpPort = 9999;
 
-int trans = 3;  //0 = serial, 1 = udp, 2 = tcp client_mqtt, 3 = MySerial - Choose which out you want use. for rs232 set 0 and connect tx f9p directly to rs232 module
+// Connection to use to transmit  data
+// For serial rs232 set 0 and connect tx f9p directly to rs232 module
+// For UDP server use 1 and use
+// For TCP MQTT server using client_mqt use 2  = tcp , 
+// For Myserial use 3 = MySerial
+int transmition_mode = 3; 
 
 WiFiUDP udp;
 
@@ -249,7 +254,7 @@ void loop() {
 
     while (MySerial.available()) {
         String s = MySerial.readStringUntil('\n');
-        switch (trans) {
+        switch (transmition_mode) {
             case 0:  //serial out
                 Serial.println(s);
                 break;
