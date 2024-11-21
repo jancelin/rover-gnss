@@ -44,9 +44,8 @@ void setup_bt();
 
 BluetoothSerial SerialBT;
 HardwareSerial MySerial(1);
-#define PIN_TX 26
-#define PIN_RX 27 
-#define POWER_PIN 25
+#define PIN_TX 17
+#define PIN_RX 16
 
 #define ONE_WIRE_BUS 0
 
@@ -117,12 +116,10 @@ TinyGPSCustom gnssPDOP(gps, "GNGSA", 15);
 TinyGPSCustom gnssHDOP(gps, "GNGSA", 16);
 
 void setup() {
-    pinMode(POWER_PIN, OUTPUT);
-    digitalWrite(POWER_PIN, HIGH);
 
     Serial.begin(115200);
     delay(100);
-    MySerial.begin(115200, SERIAL_8N1, PIN_RX, PIN_TX);
+    MySerial.begin(460800, SERIAL_8N1, PIN_RX, PIN_TX);
     delay(100);
 
     sensors.begin();
