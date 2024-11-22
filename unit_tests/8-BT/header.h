@@ -3,9 +3,6 @@
 
 #include <Arduino.h>
 
-/* Serial */
-#define BAUD_SERIAL 115200 // Debug Serial baund rate
-#define BAUND_RECEIVER 0   // Auto detect baud //921600 // GPS receiver baund rate
 //#define SERIAL_SIZE_RX 1024
 #ifndef SERIAL_SIZE_RX
 //static const uint8_t SERIAL_SIZE_RX = uint8_t(112);

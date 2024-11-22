@@ -7,7 +7,11 @@
 /* CONFIG for UART1 */
 #define PIN_RX 16
 #define PIN_TX 17 
-#define BT_NAME "rover-BT-RTK"
+#define BT_NAME "ESP32_UM980_FULLBT"
+/* Serial */
+#define BAUD_SERIAL 115200 // Debug Serial baund rate
+#define BAUD_RECEIVER 460800    // GNSS receiver baund rate
+
 HardwareSerial *RTCM{&Serial1};
 HardwareSerial *Receiver{&Serial2};
 
@@ -130,7 +134,7 @@ void setup()
     Receiver->onReceiveError(receiveErrorFnc);
     // Receiver->setRxTimeout(1);
 
-    Receiver->begin(460800, SERIAL_8N1, PIN_RX, PIN_TX /*, false, 20000UL, static_cast<uint8_t>(SERIAL_SIZE_RX)*/);
+    Receiver->begin(BAUD_RECEIVER, SERIAL_8N1, PIN_RX, PIN_TX /*, false, 20000UL, static_cast<uint8_t>(SERIAL_SIZE_RX)*/);
     // Receiver->begin(BAUND_RECEIVER, SERIAL_8N1, RXD2, TXD2 /*, false, 20000UL, static_cast<uint8_t>(SERIAL_SIZE_RX)*/);
 
     // delay(500);
@@ -141,7 +145,7 @@ void setup()
     else
     {
         log_w("Receiver baudrate not detected");
-        Receiver->begin(115200, SERIAL_8N1, PIN_RX, PIN_TX /*, false, 20000UL, SERIAL_SIZE_RX*/);
+        Receiver->begin(BAUD_RECEIVER, SERIAL_8N1, PIN_RX, PIN_TX /*, false, 20000UL, SERIAL_SIZE_RX*/);
         // Receiver->begin(BAUD_SERIAL, SERIAL_8N1, RXD2, TXD2 /*, false, 20000UL, SERIAL_SIZE_RX*/);
 
     }
@@ -149,6 +153,9 @@ void setup()
     RTCM->setRxBufferSize(RX_BUFFER_SIZE);
     RTCM->onReceive(onRtcmReceiveCb, false);
     RTCM->onReceiveError(receiveErrorFnc);
+
+    // RTCM->begin(BAUD_RECEIVER, SERIAL_8N1, 16, 17);
+    // RTCM->begin(BAUD_RECEIVER, SERIAL_8N1, RXD1, TXD1);
 }
 
 void loop()
