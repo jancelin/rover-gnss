@@ -76,12 +76,11 @@ const int udpPort = 9999;
 // UDP_SERVER
 // TCP_MQTT
 // RS2323_MYSERIAL
-int transmition_mode = RS2323_MYSERIAL;
-
-#define RS2323_SERIAL 0
+#define LOG 0
 #define UDP_SERVER 1
-#define TCP_MQTT 2
-#define RS2323_MYSERIAL 3
+#define TCP_SERVER 2
+#define MYSERIAL 3
+#define TRANSMITION_MODE MYSERIAL
 
 WiFiUDP udp;
 
@@ -118,7 +117,7 @@ void setup() {
 
   // Setup Wifi & MQTT
   setup_wifi();
-  if (transmition_mode == TCP_MQTT) {
+  if (TRANSMITION_MODE == TCP_MQTT) {
     client_mqtt.setServer(mqtt_server, mqtt_port);
     client_mqtt.setCallback(callback);
   }
@@ -203,7 +202,7 @@ void loop() {
   long now = millis();
   if (now - lastMsg > timeInterval) {
     lastMsg = now;
-    if (transmition_mode == TCP_MQTT) {
+    if (TRANSMITION_MODE == TCP_MQTT) {
 
 
       if (!client_mqtt.connected()) {
@@ -254,7 +253,7 @@ void loop() {
     json += "\"Lon\":\"" + String(gps.location.lng(), 9) + "\",";
     json += "\"Lat\":\"" + String(gps.location.lat(), 9) + "\",";
     json += "\"FIXE\":\"" + String(gnssFixMode.value()) + "\"}";
-    if (transmition_mode == TCP_MQTT) {
+    if (TRANSMITION_MODE == TCP_MQTT) {
       client_mqtt.publish(mqtt_output, json.c_str());
       client_mqtt.disconnect();
 
@@ -267,7 +266,7 @@ void loop() {
 
   while (MySerial.available()) {
     String s = MySerial.readStringUntil('\n');
-    switch (transmition_mode) {
+    switch (TRANSMITION_MODE) {
       case RS2323_SERIAL:  //serial out
         Serial.println(s);
         break;
