@@ -357,7 +357,7 @@ void handleSerialData() {
                 udp.endPacket();
                 break;
             case TCP_SERVER:  // tcp client_wifi out
-                if (!client_wifi.connect(server, port)) {
+                if (!client_wifi.connect(tcp_server, port)) {
                     logMessage(LOG_LEVEL_ERROR, "connection failed");
                     return;
                 }

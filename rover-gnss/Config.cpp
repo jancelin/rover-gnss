@@ -27,7 +27,7 @@ char user[32] = "rover-gnss-tester";
 char passwd[32] = "";
 
 // Network configuration
-IPAddress server(192, 168, 1, 100);
+IPAddress tcp_server(192, 168, 1, 100);
 int port = 80;
 const char* udpAddress = "192.168.1.255";
 const int udpPort = 9999;
