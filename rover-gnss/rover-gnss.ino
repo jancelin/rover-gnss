@@ -347,16 +347,16 @@ void handleSerialData() {
             gps.encode(buffer[i]);
         }
 
-        switch (trans) {
-            case 0:  // serial out
+        switch (transmition_mode) {
+            case LOG:  // serial out
                 logMessage(LOG_LEVEL_DEBUG, buffer);
                 break;
-            case 1:  // udp out
+            case UDP_SERVER:  // udp out
                 udp.beginPacket(udpAddress, udpPort);
                 udp.write((uint8_t*)buffer, len);
                 udp.endPacket();
                 break;
-            case 2:  // tcp client_wifi out
+            case TCP_SERVER:  // tcp client_wifi out
                 if (!client_wifi.connect(server, port)) {
                     logMessage(LOG_LEVEL_ERROR, "connection failed");
                     return;
@@ -370,10 +370,7 @@ void handleSerialData() {
                 }
                 client_wifi.stop();
                 break;
-            case 3:  // MySerial out
-                MySerial.write((uint8_t*)buffer, len);
-                break;
-            case 4:  // MySerial out
+            case MYSERIAL:  // MySerial out
                 MySerial.write((uint8_t*)buffer, len);
                 break;
             default:  // mauvaise config

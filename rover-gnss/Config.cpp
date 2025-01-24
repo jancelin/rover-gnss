@@ -31,7 +31,17 @@ IPAddress server(192, 168, 1, 100);
 int port = 80;
 const char* udpAddress = "192.168.1.255";
 const int udpPort = 9999;
-int trans = 3;
+
+// Connection to use to transmit  data
+// RS2323_SERIAL : and connect tx f9p directly to rs232 module
+// UDP_SERVER
+// TCP_MQTT
+// RS2323_MYSERIAL
+#define LOG 0
+#define UDP_SERVER 1
+#define TCP_SERVER 2
+#define MYSERIAL 3
+int transmition_mode = RS2323_MYSERIAL;
 
 // Timing intervals
 const unsigned long wifiReconnectInterval = 10000; // 10 seconds
