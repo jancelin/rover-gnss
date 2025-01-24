@@ -20,8 +20,8 @@ void setup() {
     loadPreferences();
 
     setup_wifi();
-    client_mqtt.setServer(mqtt_server, mqtt_port);
-    client_mqtt.setCallback(callback);
+    mqtt_client.setServer(mqtt_server, mqtt_port);
+    mqtt_client.setCallback(callback);
 
     connectToWiFi();
     if (!isAPMode) {
@@ -106,11 +106,11 @@ void loop() {
 
         // Handle MQTT reconnection
         if (WiFi.status() == WL_CONNECTED) {
-            if (!client_mqtt.connected() && (now - lastMqttReconnectAttempt > mqttReconnectInterval)) {
+            if (!mqtt_client.connected() && (now - lastMqttReconnectAttempt > mqttReconnectInterval)) {
                 lastMqttReconnectAttempt = now;
                 reconnectMQTT();
             } else {
-                client_mqtt.loop();
+                mqtt_client.loop();
             }
         }
 
@@ -171,14 +171,14 @@ void readGNSSData() {
 
 //MQTT
 void handleMQTTConnection() {
-    if (!client_mqtt.connected()) {
+    if (!mqtt_client.connected()) {
         reconnectMQTT();
     }
-    client_mqtt.loop();
+    mqtt_client.loop();
 }
 
 void publishMQTTData() {
-    if (mqtt_enabled && client_mqtt.connected() && gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
+    if (mqtt_enabled && mqtt_client.connected() && gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
         char timeBuffer[30];
         snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d,%02d",
                  gps.date.year(), gps.date.month(), gps.date.day(),
@@ -207,7 +207,7 @@ void publishMQTTData() {
                       "\",\"Dist\":\"" + String(distance) +
                       "\",\"Time\":\"" + String(timeBuffer) + "\"}";
 
-        if (client_mqtt.publish(mqtt_output, json.c_str())) {
+        if (mqtt_client.publish(mqtt_output, json.c_str())) {
             logMessage(LOG_LEVEL_INFO, "Mqtt sent to : ", mqtt_output);
             logMessage(LOG_LEVEL_INFO, json.c_str());
         } else {
@@ -334,7 +334,7 @@ void handleNTRIPData() {
 }
 
 void handleSerialData() {
-    WiFiClient client_wifi;
+    WiFiClient wifi_client;
     char buffer[512]; // Buffer pour stocker les données série
     while (MySerial.available()) {
         int len = MySerial.readBytesUntil('\n', buffer, sizeof(buffer) - 1);
@@ -347,7 +347,7 @@ void handleSerialData() {
             gps.encode(buffer[i]);
         }
 
-        switch (transmition_mode) {
+        switch (TRANSMITION_MODE) {
             case LOG:  // serial out
                 logMessage(LOG_LEVEL_DEBUG, buffer);
                 break;
@@ -357,18 +357,18 @@ void handleSerialData() {
                 udp.endPacket();
                 break;
             case TCP_SERVER:  // tcp client_wifi out
-                if (!client_wifi.connect(tcp_server, port)) {
+                if (!wifi_client.connect(tcp_server, port)) {
                     logMessage(LOG_LEVEL_ERROR, "connection failed");
                     return;
                 }
-                client_wifi.write((uint8_t*)buffer, len);
-                while (client_wifi.connected()) {
-                    while (client_wifi.available()) {
-                        char c = client_wifi.read();
+                wifi_client.write((uint8_t*)buffer, len);
+                while (wifi_client.connected()) {
+                    while (wifi_client.available()) {
+                        char c = wifi_client.read();
                         logMessage(LOG_LEVEL_DEBUG, String(c).c_str());
                     }
                 }
-                client_wifi.stop();
+                wifi_client.stop();
                 break;
             case MYSERIAL:  // MySerial out
                 MySerial.write((uint8_t*)buffer, len);

@@ -104,8 +104,8 @@ void connectToWiFi() {
 
         // Reinitialize MQTT and NTRIP connections after WiFi reconnects
         if (!isAPMode) {
-            if (client_mqtt.connected()) {
-                client_mqtt.disconnect();
+            if (mqtt_client.connected()) {
+                mqtt_client.disconnect();
             }
             reconnectMQTT();
 
@@ -124,20 +124,20 @@ void connectToWiFi() {
 void reconnectMQTT() {
     if (!mqtt_enabled || isAPMode) return;
     unsigned long startAttemptTime = millis();
-    while (!client_mqtt.connected() && millis() - startAttemptTime < mqttReconnectInterval) {
+    while (!mqtt_client.connected() && millis() - startAttemptTime < mqttReconnectInterval) {
         logMessage(LOG_LEVEL_INFO, "Attempting MQTT connection...");
-        if (client_mqtt.connect(mqtt_UUID, mqtt_user, mqtt_password)) {
+        if (mqtt_client.connect(mqtt_UUID, mqtt_user, mqtt_password)) {
             logMessage(LOG_LEVEL_INFO, "connected");
-            client_mqtt.subscribe(mqtt_input);
+            mqtt_client.subscribe(mqtt_input);
             break;
         } else {
-            logMessage(LOG_LEVEL_ERROR, "failed, rc=", client_mqtt.state());
+            logMessage(LOG_LEVEL_ERROR, "failed, rc=", mqtt_client.state());
             logMessage(LOG_LEVEL_INFO, " try again in 5 seconds");
             vTaskDelay(500 / portTICK_PERIOD_MS); // Utiliser vTaskDelay au lieu de delay()
         }
     }
 
-    if (!client_mqtt.connected()) {
+    if (!mqtt_client.connected()) {
         logMessage(LOG_LEVEL_ERROR, "MQTT connection failed");
     }
 }
