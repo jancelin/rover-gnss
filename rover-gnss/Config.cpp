@@ -41,7 +41,7 @@ const int udpPort = 9999;
 #define UDP_SERVER 1
 #define TCP_SERVER 2
 #define MYSERIAL 3
-int transmition_mode = RS2323_MYSERIAL;
+int transmition_mode = MYSERIAL;
 
 // Timing intervals
 const unsigned long wifiReconnectInterval = 10000; // 10 seconds
