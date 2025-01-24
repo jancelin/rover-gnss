@@ -20,11 +20,11 @@ void setup() {
     loadPreferences();
 
     setup_wifi();
-    client.setServer(mqtt_server, mqtt_port);
-    client.setCallback(callback);
+    mqtt_client.setServer(mqtt_server, mqtt_port);
+    mqtt_client.setCallback(callback);
 
     connectToWiFi();
-    if (!isAPMode) { 
+    if (!isAPMode) {
         requestSourceTable();
         requestMountPointRawData();
     }
@@ -106,11 +106,11 @@ void loop() {
 
         // Handle MQTT reconnection
         if (WiFi.status() == WL_CONNECTED) {
-            if (!client.connected() && (now - lastMqttReconnectAttempt > mqttReconnectInterval)) {
+            if (!mqtt_client.connected() && (now - lastMqttReconnectAttempt > mqttReconnectInterval)) {
                 lastMqttReconnectAttempt = now;
                 reconnectMQTT();
             } else {
-                client.loop();
+                mqtt_client.loop();
             }
         }
 
@@ -171,19 +171,19 @@ void readGNSSData() {
 
 //MQTT
 void handleMQTTConnection() {
-    if (!client.connected()) {
+    if (!mqtt_client.connected()) {
         reconnectMQTT();
     }
-    client.loop();
+    mqtt_client.loop();
 }
 
 void publishMQTTData() {
-    if (mqtt_enabled && client.connected() && gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
+    if (mqtt_enabled && mqtt_client.connected() && gps.location.isValid() && gps.date.isValid() && gps.time.isValid() && gps.altitude.isValid() && gps.satellites.isValid()) {
         char timeBuffer[30];
         snprintf(timeBuffer, sizeof(timeBuffer), "%04d-%02d-%02d %02d:%02d:%02d,%02d",
                  gps.date.year(), gps.date.month(), gps.date.day(),
                  gps.time.hour(), gps.time.minute(), gps.time.second(),gps.time.centisecond());
-        
+
         float waterTemp = sensors.getTempCByIndex(0);
         if (waterTemp == DEVICE_DISCONNECTED_C) {
             waterTemp = 0; // Set temperature to 0 if no sensor is connected
@@ -206,8 +206,8 @@ void publishMQTTData() {
                       "\",\"Temp\":\"" + String(waterTemp) +
                       "\",\"Dist\":\"" + String(distance) +
                       "\",\"Time\":\"" + String(timeBuffer) + "\"}";
-        
-        if (client.publish(mqtt_output, json.c_str())) {
+
+        if (mqtt_client.publish(mqtt_output, json.c_str())) {
             logMessage(LOG_LEVEL_INFO, "Mqtt sent to : ", mqtt_output);
             logMessage(LOG_LEVEL_INFO, json.c_str());
         } else {
@@ -216,7 +216,7 @@ void publishMQTTData() {
     } else {
       if (!isAPMode) {
         logMessage(LOG_LEVEL_WARN, "GNSS data not valid. Data not sent.");
-      } else { 
+      } else {
         logMessage(LOG_LEVEL_DEBUG, "Wait...");
       }
     }
@@ -334,7 +334,7 @@ void handleNTRIPData() {
 }
 
 void handleSerialData() {
-    WiFiClient client;
+    WiFiClient wifi_client;
     char buffer[512]; // Buffer pour stocker les données série
     while (MySerial.available()) {
         int len = MySerial.readBytesUntil('\n', buffer, sizeof(buffer) - 1);
@@ -347,33 +347,30 @@ void handleSerialData() {
             gps.encode(buffer[i]);
         }
 
-        switch (trans) {
-            case 0:  // serial out
+        switch (TRANSMITION_MODE) {
+            case LOG:  // serial out
                 logMessage(LOG_LEVEL_DEBUG, buffer);
                 break;
-            case 1:  // udp out
+            case UDP_SERVER:  // udp out
                 udp.beginPacket(udpAddress, udpPort);
                 udp.write((uint8_t*)buffer, len);
                 udp.endPacket();
                 break;
-            case 2:  // tcp client out
-                if (!client.connect(server, port)) {
+            case TCP_SERVER:  // tcp client_wifi out
+                if (!wifi_client.connect(tcp_server, port)) {
                     logMessage(LOG_LEVEL_ERROR, "connection failed");
                     return;
                 }
-                client.write((uint8_t*)buffer, len);
-                while (client.connected()) {
-                    while (client.available()) {
-                        char c = client.read();
+                wifi_client.write((uint8_t*)buffer, len);
+                while (wifi_client.connected()) {
+                    while (wifi_client.available()) {
+                        char c = wifi_client.read();
                         logMessage(LOG_LEVEL_DEBUG, String(c).c_str());
                     }
                 }
-                client.stop();
+                wifi_client.stop();
                 break;
-            case 3:  // MySerial out
-                MySerial.write((uint8_t*)buffer, len);
-                break;
-            case 4:  // MySerial out
+            case MYSERIAL:  // MySerial out
                 MySerial.write((uint8_t*)buffer, len);
                 break;
             default:  // mauvaise config

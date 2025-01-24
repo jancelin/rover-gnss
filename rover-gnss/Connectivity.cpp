@@ -103,9 +103,9 @@ void connectToWiFi() {
         isAPMode = false; // Reset AP mode flag
 
         // Reinitialize MQTT and NTRIP connections after WiFi reconnects
-        if (!isAPMode) { 
-            if (client.connected()) {
-                client.disconnect();
+        if (!isAPMode) {
+            if (mqtt_client.connected()) {
+                mqtt_client.disconnect();
             }
             reconnectMQTT();
 
@@ -124,20 +124,20 @@ void connectToWiFi() {
 void reconnectMQTT() {
     if (!mqtt_enabled || isAPMode) return;
     unsigned long startAttemptTime = millis();
-    while (!client.connected() && millis() - startAttemptTime < mqttReconnectInterval) {
+    while (!mqtt_client.connected() && millis() - startAttemptTime < mqttReconnectInterval) {
         logMessage(LOG_LEVEL_INFO, "Attempting MQTT connection...");
-        if (client.connect(mqtt_UUID, mqtt_user, mqtt_password)) {
+        if (mqtt_client.connect(mqtt_UUID, mqtt_user, mqtt_password)) {
             logMessage(LOG_LEVEL_INFO, "connected");
-            client.subscribe(mqtt_input);
+            mqtt_client.subscribe(mqtt_input);
             break;
         } else {
-            logMessage(LOG_LEVEL_ERROR, "failed, rc=", client.state());
+            logMessage(LOG_LEVEL_ERROR, "failed, rc=", mqtt_client.state());
             logMessage(LOG_LEVEL_INFO, " try again in 5 seconds");
             vTaskDelay(500 / portTICK_PERIOD_MS); // Utiliser vTaskDelay au lieu de delay()
         }
     }
 
-    if (!client.connected()) {
+    if (!mqtt_client.connected()) {
         logMessage(LOG_LEVEL_ERROR, "MQTT connection failed");
     }
 }
@@ -244,7 +244,7 @@ void handleRoot() {
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" value=")rawliteral" + String(password) + R"rawliteral("><br>
                 <button type="button" onclick="togglePasswordVisibility('password')">Show/Hide</button><br>
-                
+
                 <h2>NTRIP Configuration</h2>
                 <label for="host">NTRIP Host:</label>
                 <input type="text" id="host" name="host" value=")rawliteral" + String(host) + R"rawliteral("><br>
@@ -257,7 +257,7 @@ void handleRoot() {
                 <label for="passwd">NTRIP Password:</label>
                 <input type="password" id="passwd" name="passwd" value=")rawliteral" + String(passwd) + R"rawliteral("><br>
                 <button type="button" onclick="togglePasswordVisibility('passwd')">Show/Hide</button><br>
-                
+
                 <h2>MQTT Configuration</h2>
                 <label for="mqtt_enabled">Enable MQTT:</label>
                 <input type="checkbox" id="mqtt_enabled" name="mqtt_enabled" )rawliteral" + String(mqtt_enabled ? "checked" : "") + R"rawliteral(><br>
@@ -278,7 +278,7 @@ void handleRoot() {
                 <button type="button" onclick="togglePasswordVisibility('mqtt_password')">Show/Hide</button><br>
                 <label for="publish_freq">Publish Frequency:</label>
                 <input type="number" id="publish_freq" name="publish_freq" value=")rawliteral" + String(publish_freq) + R"rawliteral("><br>
-                
+
                 <h2>SAVE Configurations</h2>
                 <input type="submit" value="Save">
             </form>
