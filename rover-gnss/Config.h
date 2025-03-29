@@ -21,6 +21,17 @@
 
 #define LOG_LEVEL LOG_LEVEL_DEBUG
 
+// Connection to use to transmit  data
+// RS2323_SERIAL : and connect tx f9p directly to rs232 module
+// UDP_SERVER
+// TCP_MQTT
+// RS2323_MYSERIAL
+#define LOG 0
+#define UDP_SERVER 1
+#define TCP_SERVER 2
+#define MYSERIAL 3
+#define TRANSMITION_MODE MYSERIAL
+
 // Pinouts
 #define PIN_TX 18  //esp32 
 #define PIN_RX 19 //esp32
@@ -52,11 +63,10 @@ extern char user[32];
 extern char passwd[32];
 
 // Network configuration
-extern IPAddress server;
+extern IPAddress tcp_server;
 extern int port;
 extern const char* udpAddress;
 extern const int udpPort;
-extern int trans;
 
 // Timing intervals
 extern const unsigned long wifiReconnectInterval;
@@ -65,7 +75,7 @@ extern const unsigned long ntripReconnectInterval;
 
 // Global variables
 extern WiFiClient espClient;
-extern PubSubClient client;
+extern PubSubClient mqtt_client;
 extern TinyGPSPlus gps;
 extern NTRIPClient ntrip_c;
 extern WiFiUDP udp;
