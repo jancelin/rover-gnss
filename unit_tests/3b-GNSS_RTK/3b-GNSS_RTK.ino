@@ -79,20 +79,20 @@ void setup() {
         break;
     }
 
-    Serial.println("Requesting SourceTable.");
-    if (ntrip_c.reqSrcTbl(host, httpPort)) {
-        char buffer[512];
-        delay(5);
-        while (ntrip_c.available()) {
-            ntrip_c.readLine(buffer, sizeof(buffer));
-            //Serial.print(buffer);
-        }
-        Serial.print("Requesting SourceTable is OK\n");
+//    Serial.println("Requesting SourceTable.");
+//    if (ntrip_c.reqSrcTbl(host, httpPort)) {
+//        char buffer[512];
+//        delay(5);
+//        while (ntrip_c.available()) {
+//            ntrip_c.readLine(buffer, sizeof(buffer));
+//            //Serial.print(buffer);
+//        }
+//        Serial.print("Requesting SourceTable is OK\n");
 
-    } else {
-        Serial.println("SourceTable request error");
-    }
-    ntrip_c.stop(); // Need to call "stop" function for next request.
+//    } else {
+//        Serial.println("SourceTable request error");
+//    }
+//    ntrip_c.stop(); // Need to call "stop" function for next request.
 
     Serial.println("Requesting MountPoint's Raw data");
     if (!ntrip_c.reqRaw(host, httpPort, mntpnt, user, passwd)) {

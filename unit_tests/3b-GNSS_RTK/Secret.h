@@ -1,7 +1,7 @@
-#define WIFI_SSID "Your Wifi SSID"
-#define WIFI_PASSWORD "Your Wifi Password"
+#define WIFI_SSID "WifiRaspi"
+#define WIFI_PASSWORD "wifiraspi"
 
-#define NTRIP_SERVER_HOST "Adresse for Ntrip server"
-#define NTRIP_USER "YOUR NTRIP User"
-#define NTRIP_PASSWORD "YOUR NTRIP Password if neede"
-#define NTRIP_CASTER_MOUNTPOINT "YOUR NTRIP MOUNT POINT"
+#define NTRIP_SERVER_HOST "crtk.net"
+#define NTRIP_USER "centipede"
+#define NTRIP_PASSWORD "centipede"
+#define NTRIP_CASTER_MOUNTPOINT "NEAR"
