@@ -1,5 +1,6 @@
 
 * Energie
+
 | composant | lien | prix |
 | ------------- | ------------- | ------------- |   
 | Li-ion Charge and Protection circuit 2100mA with DC-DC converter 	Li-ion Charge and Protection circuit 2100mA with DC-DC converter | https://www.tinytronics.nl/en/power/bms-and-chargers/li-ion-and-li-po/with-protection-circuit/li-ion-charge-and-protection-circuit-2100ma-with-dc-dc-converter  | 2.48€ |
@@ -8,6 +9,7 @@
 
 
 * Connectique
+
 | composant | lien | prix |
 | ------------- | ------------- |  ------------- |
 | USB-C 2.0 Female to DIP Adapter 	USB-C 2.0 Female to DIP Adapter | https://www.tinytronics.nl/index.php?route=checkout/cart|0.74€ |
@@ -16,18 +18,21 @@
 | SMA Female to IPEX-uFL Female Cable - 10cm 	SMA Female to IPEX-uFL Female Cable - 10cm | https://www.tinytronics.nl/en/cables-and-connectors/cables-and-adapters/others/sma-female-to-ufl-female-cable | 0.99€ |
 
 * bluetooth ou ESP32
+
 | composant | lien | prix |
 | ------------- | ------------- |  ------------- |
 | Feasycom DB004-BT836B Bluetooth 5.0 Module 	Feasycom DB004-BT836B Bluetooth 5.0 Module | https://www.tinytronics.nl/en/communication-and-signals/wireless/bluetooth/modules/feasycom-db004-bt836b-bluetooth-5.0-module | 8.26€ |
  | ESP32 | | |
 
 * GNSS (à choisir dans la liste)
+
 | composant | lien | prix |
 | ------------- | ------------- |------------- |
 | mosaic-G5 RTK InCase PIN GNSS receiver board with USB C | https://gnss.store/products/elt0751?variant=55851910037836 | 329.99€ |
 | UM980 RTK InCase PIN GNSS receiver board with USB C" |  https://gnss.store/products/elt0221?variant=55851791647052 | 159.99€|
 
 * Antenne (à choisir dans la liste)
+
 | composant | lien | prix |
 | ------------- | ------------- | ------------- |
 | AllBand+ Helix 35dB High Precision Antenna for RTK IP67 | https://gnss.store/products/elt0121 | 189.99€  |
@@ -36,6 +41,7 @@
 
 
 * IMU / orientation (à choisir dans la liste)
+
 | composant | lien | prix |
 | ------------- | ------------- | ------------- |
 | Adafruit 9-DOF Orientation IMU Fusion Breakout - BNO085 (BNO080) - STEMMA QT / Qwiic | https://learn.adafruit.com/adafruit-9-dof-orientation-imu-fusion-breakout-bno085/arduino /https://www.gotronic.fr/art-module-9-dof-bno085-ada4754-33477.htm?srsltid=AfmBOoq1NqRpfXd5x4uj5dbbHvwE_tLpB7XeQBxhrD_if2hDHQ1AXI5x | 29.90€ |
