@@ -12,7 +12,7 @@
 
 | composant | lien | prix |
 | ------------- | ------------- |  ------------- |
-| USB-C 2.0 Female to DIP Adapter 	USB-C 2.0 Female to DIP Adapter | https://www.tinytronics.nl/index.php?route=checkout/cart|0.74€ |
+| USB-C 2.0 Female to DIP Adapter 	USB-C 2.0 Female to DIP Adapter | https://www.tinytronics.nl/en/cables-and-connectors/connectors/usb/usb-c-2.0-female-to-dip-adapter | 0.90€ |
 | USB-C 2.0 Male to Soldering Pads Adapter V2 	USB-C 2.0 Male to Soldering Pads Adapter V2 | https://www.tinytronics.nl/en/cables-and-connectors/connectors/usb/usb-c-2.0-male-to-soldering-pads-adapter-v2 | 0.41€ |
 | Breadboard Tactile Pushbutton Switch Momentary 2pin 6*6*5mm 	Breadboard Tactile Pushbutton Switch Momentary 2pin 6*6*5mm | https://www.tinytronics.nl/en/switches/manual-switches/pcb-switches/breadboard-tactile-pushbutton-switch-momentary-2pin-6*6*5mm | 0.12€|
 | SMA Female to IPEX-uFL Female Cable - 10cm 	SMA Female to IPEX-uFL Female Cable - 10cm | https://www.tinytronics.nl/en/cables-and-connectors/cables-and-adapters/others/sma-female-to-ufl-female-cable | 0.99€ |
