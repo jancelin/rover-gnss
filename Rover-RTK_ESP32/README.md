@@ -1,14 +1,7 @@
-layout: default
-title: 404
-nav_exclude: true
----
-
 
 # CentipedeRTK rover-gnss
 
 Documentation of rover-gnss
-
-[Degree precision versus length](https://en.wikipedia.org/wiki/Decimal_degrees)
 
 ## Config ARDUINO
 
@@ -19,6 +12,6 @@ File > Preference
 
 ### Probleme possible
 
-Driver Windows => Installer le driver 
+Driver Windows => Installer le driver
 
 Ubuntu - Ajouter le compte utilisateur au groupe serial

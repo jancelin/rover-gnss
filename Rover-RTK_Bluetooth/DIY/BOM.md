@@ -28,21 +28,14 @@
 
 | composant | lien | prix |
 | ------------- | ------------- |------------- |
-| mosaic-G5 RTK InCase PIN GNSS receiver board with USB C | https://gnss.store/products/elt0751?variant=55851910037836 | 329.99€ |
 | UM980 RTK InCase PIN GNSS receiver board with USB C" |  https://gnss.store/products/elt0221?variant=55851791647052 | 159.99€|
+| mosaic-G5 RTK InCase PIN GNSS receiver board with USB C | https://gnss.store/products/elt0751?variant=55851910037836 | 329.99€ |
+
 
 * Antenne (à choisir dans la liste)
 
 | composant | lien | prix |
 | ------------- | ------------- | ------------- |
-| AllBand+ Helix 35dB High Precision Antenna for RTK IP67 | https://gnss.store/products/elt0121 | 189.99€  |
 | L1/L2/L5 High Performance Multiband RTK GNSS Active Quad Helix Antenna | https://gnss.store/products/elt0014 | 69.99€ |
+| AllBand+ Helix 35dB High Precision Antenna for RTK IP67 | https://gnss.store/products/elt0121 | 189.99€  |
 | RTK GNSS Antenna BT-800S | https://store.beitian.com/products/beitian-rtk-mushroom-head-antenna-gnss-four-star-full-frequency-beidou-gps-high-precision-driving-test-bt-800s?variant=51243583734047&_pos=3&_sid=c43904514&_ss=r | 79.78€
-
-
-* IMU / orientation (à choisir dans la liste)
-
-| composant | lien | prix |
-| ------------- | ------------- | ------------- |
-| Adafruit 9-DOF Orientation IMU Fusion Breakout - BNO085 (BNO080) - STEMMA QT / Qwiic | https://learn.adafruit.com/adafruit-9-dof-orientation-imu-fusion-breakout-bno085/arduino /https://www.gotronic.fr/art-module-9-dof-bno085-ada4754-33477.htm?srsltid=AfmBOoq1NqRpfXd5x4uj5dbbHvwE_tLpB7XeQBxhrD_if2hDHQ1AXI5x | 29.90€ |
-| 9-axis AHRS Tilt Inclinometer Gyroscope Module|https://www.wit-motion.com/Module/22.html- / |....|
