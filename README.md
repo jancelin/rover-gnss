@@ -30,12 +30,13 @@ Il contient également un dossier de **configurations récepteurs GNSS** (profil
 
 | Variante | Matériel principal | iOS | Android | Qui fait le NTRIP ? | Points forts | Dossier |
 |---|---|---:|---:|---|---|---|
-| **Bluetooth SPP (pass-through)** | ESP32 + GNSS | ⚠️ (SPP non natif iOS) | ✅ | Smartphone | simple, bidirectionnel (RTCM → GNSS), efficace | `Rover-RTK_ESP32/rover-rtk_BT-SPP/` |
+| **Bluetooth module (sans ESP32)** | Module BT (SPP) + GNSS | ⚠️ | ✅ | Smartphone | très low-power, peu de code, montage “léger” | `Rover-RTK_Bluetooth/DIY/` |
+| **NavX (commercial)** | produit fini |  ⚠️  | ✅ | Smartphone | solution “plug&play” basée sur la même philosophie | `Rover-RTK_Bluetooth/NavX/` |
+| **Bluetooth SPP (pass-through)** | ESP32 + GNSS | ⚠️ | ✅ | Smartphone | simple, bidirectionnel (RTCM → GNSS), efficace | `Rover-RTK_ESP32/rover-rtk_BT-SPP/` |
 | **Bluetooth BLE (NUS)** | ESP32 + GNSS | ✅ | ✅ | Smartphone | compatible iOS via BLE/NUS (ex. SW Maps) | `Rover-RTK_ESP32/rover-rtk_BT-BLE/` |
-| **Bluetooth + Wi-Fi + NTRIP embarqué** | ESP32 + GNSS | ✅ (BT pour monitoring) | ✅ | **ESP32** | rover autonome (Wi-Fi → NTRIP → RTCM → GNSS) | `Rover-RTK_ESP32/rover-rtk_BT-WIFI-NTRIP/` |
-| **Custom : BT + Wi-Fi + NTRIP + MQTT + capteurs** | ESP32 + GNSS + capteurs | ✅ | ✅ | **ESP32** | télémétrie MQTT + config via AP/web + capteurs | `Rover-RTK_ESP32/rover-rtk_BT_WIFI_NTRIP_MQTT_SENSORS/` |
-| **Bluetooth module (sans ESP32)** | Module BT (SPP) + GNSS | selon module/config | ✅ | Smartphone | très low-power, peu de code, montage “léger” | `Rover-RTK_Bluetooth/DIY/` |
-| **NavX (commercial)** | produit fini | ✅/✅ (selon options) | ✅ | Smartphone | solution “plug&play” basée sur la même philosophie | `Rover-RTK_Bluetooth/NavX/` |
+| **Bluetooth + Wi-Fi + NTRIP embarqué** | ESP32 + GNSS | ⚠️ | ✅ | **ESP32** | rover autonome (Wi-Fi → NTRIP → RTCM → GNSS) | `Rover-RTK_ESP32/rover-rtk_BT-WIFI-NTRIP/` |
+| **Custom : BT + Wi-Fi + NTRIP + MQTT + capteurs** | ESP32 + GNSS + capteurs |  ⚠️  | ✅ | **ESP32** | télémétrie MQTT + config via AP/web + capteurs | `Rover-RTK_ESP32/rover-rtk_BT_WIFI_NTRIP_MQTT_SENSORS/` |
+
 
 > ⚠️ Remarque iOS : iOS ne supporte pas le Bluetooth SPP “classique” comme un port série générique. Pour iOS, privilégier **BLE (NUS)** ou un produit intégrant un profil compatible.
 
@@ -231,4 +232,3 @@ Ce répertoire regroupe des **tests unitaires / prototypes**, incluant aussi des
   2) Bridge (BT/BLE) fonctionnel
   3) Injection RTCM (smartphone ou NTRIP embarqué)
   4) Passage en RTK FLOAT/FIX
-
